@@ -1,0 +1,11 @@
+const APPLICATION_CONFIG = {
+  REDIS_CACHE: true,
+  PRISMA_DB: true,
+  CONSOLE_LOGGING: true,
+  WINSTON_LOGGING: true,
+  RATE_LIMIT: true,
+  CONSOLE_APP_ERROR: true,
+  USE_CSRF: false,
+};
+
+export { APPLICATION_CONFIG };

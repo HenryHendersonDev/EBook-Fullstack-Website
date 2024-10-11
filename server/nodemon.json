@@ -1,0 +1,12 @@
+{
+  "watch": ["src"],
+  "ext": "ts,json",
+  "ignore": ["src/**/*.spec.ts", "src/**/*.test.ts"],
+  "exec": "ts-node -r tsconfig-paths/register -r dotenv/config src/server.ts",
+  "events": {
+    "start": "cls && echo Starting server...",
+    "restart": "echo Server restarted...",
+    "crash": "echo Server crashed! Please check the logs.",
+    "quit": "echo Server stopped."
+  }
+}
