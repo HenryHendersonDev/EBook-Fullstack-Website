@@ -9,7 +9,7 @@ interface Payload {
 }
 
 interface IJwtService {
-  sign: (userID: string, redis: Redis) => Promise<string>;
+  sign: (userID: string, redis: Redis | null) => Promise<string>;
   verify: (token: string, isRefreshToken: boolean) => Payload | null;
   decode: (token: string) => Payload;
   reSignAccess: (accessToken: string, redis: Redis | null) => Promise<string>;
@@ -52,7 +52,7 @@ class JwtService implements IJwtService {
     throw new Error(`An unexpected error occurred: ${error}`);
   }
 
-  async sign(userID: string, redis: Redis): Promise<string> {
+  async sign(userID: string, redis: Redis | null): Promise<string> {
     try {
       const id = uuidv4();
       const tokenData = { id };

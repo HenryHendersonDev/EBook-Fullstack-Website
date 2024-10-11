@@ -1,0 +1,50 @@
+import AppError from '@/models/AppErrorModel';
+import Redis from 'ioredis';
+import { saveNewUserOnDB } from '../../model/auth/auth.model';
+import jwtService from '@/utils/auth/jwt';
+import handleUpload from '@/config/cloudinaryConfig';
+
+interface Register {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string | null;
+  filePath: string | null;
+}
+
+const userRegisterService = async (user: Register, redis: Redis | null) => {
+  try {
+    if (user.filePath) {
+      const { url } = await handleUpload(user.filePath);
+      const data = {
+        email: user.email,
+        password: user.password,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        filePath: url ? url : null,
+      };
+      const userID = await saveNewUserOnDB(data);
+      const accessToken = await jwtService.sign(userID, redis);
+      return accessToken;
+    }
+    const userID = await saveNewUserOnDB(user);
+    const accessToken = await jwtService.sign(userID, redis);
+    return accessToken;
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw error;
+    } else if (error instanceof Error) {
+      throw new AppError(
+        'Something Went Wrong While Registering user',
+        500,
+        false,
+        error,
+        true,
+        'SYSTEM_ERROR'
+      );
+    }
+    throw new Error(`An unexpected error occurred: ${error}`);
+  }
+};
+
+export default userRegisterService;

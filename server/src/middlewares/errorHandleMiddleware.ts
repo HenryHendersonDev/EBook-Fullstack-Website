@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import AppError from '@/models/AppErrorModel';
 import { APPLICATION_CONFIG } from '@/config/applicationConfig';
 import setErrorDB from '@/models/errorMode';
@@ -83,10 +83,8 @@ const controlError = async (
 ) => {
   const errorMessage = typeof error === 'string' ? error : error.message;
   const errorDetails = typeof error === 'string' ? '{}' : JSON.stringify(error);
-  if (APPLICATION_CONFIG.PRISMA_DB) {
-    // @ts-expect-error it's okay
-    await setErrorDB(type, errorMessage, risk, errorDetails);
-  }
+  // @ts-expect-error it's okay
+  await setErrorDB(type, errorMessage, risk, errorDetails);
 };
 
 const handleError = async (
@@ -154,7 +152,8 @@ process.on('uncaughtException', (error: Error) => {
 const errorMiddleware = async (
   err: Error,
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   const { message, code, status } = await handleError(err, req);
   if (
@@ -162,15 +161,6 @@ const errorMiddleware = async (
     code === 'UNAUTHORIZED_INVALID_TOKEN'
   ) {
     res.cookie('accessToken', '', {
-      httpOnly: true,
-      secure: process.env['NODE_ENV'] === 'production',
-      sameSite: 'strict',
-      signed: true,
-      expires: new Date(0),
-      path: '/',
-    });
-
-    res.cookie('refreshToken', '', {
       httpOnly: true,
       secure: process.env['NODE_ENV'] === 'production',
       sameSite: 'strict',
