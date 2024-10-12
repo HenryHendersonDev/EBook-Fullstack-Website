@@ -8,6 +8,7 @@ interface Register {
   firstName: string;
   lastName: string | null;
   filePath: string | null;
+  imagePublicID?: string | null;
 }
 const saveNewUserOnDB = async (user: Register): Promise<string> => {
   try {
@@ -19,6 +20,7 @@ const saveNewUserOnDB = async (user: Register): Promise<string> => {
         firstName: user.firstName,
         lastName: user.lastName,
         profileImage: user.filePath,
+        imagePublicID: user.imagePublicID,
       },
     });
     return newUser.id;
@@ -27,7 +29,7 @@ const saveNewUserOnDB = async (user: Register): Promise<string> => {
       if (error.code === 'P2002') {
         throw new AppError(
           'A user with this email already exists. Please use a different email and try again.',
-          400,
+          409,
           true,
           undefined,
           false,

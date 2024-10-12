@@ -15,4 +15,16 @@ const handleUpload = async (file: string) => {
   return res;
 };
 
-export default handleUpload;
+const handleDelete = async (publicId: string, type: string) => {
+  try {
+    const res = await cloudinary.uploader.destroy(publicId, {
+      resource_type: type,
+    });
+    return res;
+  } catch (error) {
+    console.error('Error deleting image:', error);
+    throw error;
+  }
+};
+
+export { handleUpload, handleDelete };

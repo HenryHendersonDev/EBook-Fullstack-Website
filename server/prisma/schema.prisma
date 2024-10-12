@@ -43,6 +43,7 @@ model User {
   wishlist      Wishlist?
   wishlistItems WishlistItem[]
   profileImage  String?
+  imagePublicID String?
 }
 
 model Sessions {

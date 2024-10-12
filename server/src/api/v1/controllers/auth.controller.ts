@@ -2,7 +2,6 @@ import { NextFunction, Request, Response } from 'express';
 import { registerSchema } from '@/api/v1/validators/index.Validation';
 import AppError from '@/models/AppErrorModel';
 import userRegisterService from '../service/auth/auth.C.service';
-import handleUpload from '@/config/cloudinaryConfig';
 
 const createUserAccount = async (
   req: Request,
@@ -41,6 +40,7 @@ const createUserAccount = async (
         expires: new Date(Date.now() + 1000 * 60 * 15),
         path: '/',
       })
+      .status(201)
       .json({
         message: 'User has been successfully created.',
         code: 'SUCCESSFULLY_CREATED',

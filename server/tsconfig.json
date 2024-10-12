@@ -22,7 +22,8 @@
       "@/api/*": ["./api/*"]
     },
     "resolveJsonModule": true,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "types": ["jest", "node"]
   },
   "ts-node": {
     "files": true

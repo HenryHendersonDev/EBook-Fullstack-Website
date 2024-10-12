@@ -160,3 +160,14 @@
 //   console.log(`Server is running at http://localhost:${PORT}`);
 // });
 //
+import { handleDelete } from './config/cloudinaryConfig';
+import path from 'path';
+
+(async () => {
+  try {
+    const newImg = await handleDelete('sxdwc4nsrw0xlgijdbpx', 'image');
+    console.log(newImg);
+  } catch (error) {
+    console.log(error);
+  }
+})();
