@@ -3,6 +3,7 @@ import Redis from 'ioredis';
 import { saveNewUserOnDB } from '../../model/auth/auth.model';
 import jwtService from '@/utils/auth/jwt';
 import { handleUpload, handleDelete } from '@/config/cloudinaryConfig';
+import passwordService from '@/utils/auth/bcrypt';
 
 interface Register {
   email: string;
@@ -14,11 +15,13 @@ interface Register {
 
 const userRegisterService = async (user: Register, redis: Redis | null) => {
   try {
+    const hashPassword = await passwordService.generate(user.password);
+    user.password = hashPassword;
     if (user.filePath) {
       const { url, public_id } = await handleUpload(user.filePath);
       const data = {
         email: user.email,
-        password: user.password,
+        password: hashPassword,
         firstName: user.firstName,
         lastName: user.lastName,
         filePath: url ? url : null,
