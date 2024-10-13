@@ -1,13 +1,16 @@
 import request from 'supertest';
 import app from '../../src/app';
 import path from 'path';
+import fs from 'fs';
 import { FixedData, data } from '../utils/userData';
 import prisma from '../../src/config/prismaClientConfig';
+import { exec } from 'child_process';
 
 describe('POST /auth/register', () => {
   it('Should return 201, set the Access Token cookie, and respond with JSON.', async () => {
     await prisma?.user.deleteMany();
-
+    exec('rdcli flushall');
+    fs.unlinkSync(path.join(__dirname, '../data/accessToken.txt'));
     const imgDIR = path.join(__dirname, './avatar.jpg');
 
     const body = {

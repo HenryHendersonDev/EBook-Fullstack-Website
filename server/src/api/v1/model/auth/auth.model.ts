@@ -1,7 +1,7 @@
 import prisma from '@/config/prismaClientConfig';
 import AppError from '@/models/AppErrorModel';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
-import { User } from '@prisma/client';
+import { User, Sessions } from '@prisma/client';
 import Redis from 'ioredis';
 import redisService from '@/utils/cache/redisCache';
 
@@ -113,4 +113,68 @@ const deleteSession = async (
   }
 };
 
-export { saveNewUserOnDB, findUserOnDB, deleteSession };
+const findUserOnDBviaSessionID = async (
+  id: string,
+  redis: Redis | null
+): Promise<Sessions | null> => {
+  try {
+    if (!prisma) throw new Error('Prisma client is not initialized');
+    const Session = await prisma.sessions.findUnique({
+      where: {
+        id,
+      },
+    });
+    if (Session) {
+      const stringSession = JSON.stringify(Session);
+      await redisService.set(id, stringSession, redis, 1800, 'session');
+    }
+    return Session;
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw error;
+    } else if (error instanceof Error) {
+      throw new AppError(
+        'Something went Wrong While Saving New User',
+        500,
+        false,
+        error,
+        true,
+        'SYSTEM_ERROR'
+      );
+    }
+    throw new Error(`An unexpected error occurred: ${error}`);
+  }
+};
+
+const findUserOnDBViaID = async (id: string): Promise<User | null> => {
+  try {
+    if (!prisma) throw new Error('Prisma client is not initialized');
+    const isUser = await prisma.user.findUnique({
+      where: {
+        id,
+      },
+    });
+    return isUser;
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw error;
+    } else if (error instanceof Error) {
+      throw new AppError(
+        'Something went Wrong While Saving New User',
+        500,
+        false,
+        error,
+        true,
+        'SYSTEM_ERROR'
+      );
+    }
+    throw new Error(`An unexpected error occurred: ${error}`);
+  }
+};
+export {
+  saveNewUserOnDB,
+  findUserOnDB,
+  deleteSession,
+  findUserOnDBviaSessionID,
+  findUserOnDBViaID,
+};

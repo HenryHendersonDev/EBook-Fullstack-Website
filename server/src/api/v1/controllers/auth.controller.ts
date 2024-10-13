@@ -2,11 +2,16 @@ import { NextFunction, Request, Response } from 'express';
 import {
   registerSchema,
   loginSchema,
+  passwordResetRequestSchema,
 } from '@/api/v1/validators/index.Validation';
 import AppError from '@/models/AppErrorModel';
 import userRegisterService from '../service/auth/auth.C.service';
 import userLoginService from '../service/auth/auth.R.service';
 import userLogoutService from '../service/auth/auth.D.service';
+import {
+  userOTPreqViaEmail,
+  userOTPreqViaToken,
+} from '../service/auth/auth.U.service';
 
 // This controller for Creating New user and Returning The access token as Cookie and Status Code 201
 const createUserAccount = async (
@@ -118,6 +123,7 @@ const logoutUserAccount = async (
         'NOT_LOGGED_IN'
       );
     }
+
     await userLogoutService(accessToken, req.redis);
     res
       .cookie('accessToken', '', {
@@ -138,4 +144,67 @@ const logoutUserAccount = async (
   }
 };
 
-export { createUserAccount, loginUserAccount, logoutUserAccount };
+// This controller For Sending Password Reset OTP code to user email Address.
+const reqPassResetOTPUserAccount = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { accessToken } = req.signedCookies;
+    if (accessToken) {
+      const isSend = await userOTPreqViaToken(accessToken, req.redis);
+      if (!isSend) {
+        throw new AppError(
+          'Something Went Wrong While Sending The Email',
+          500,
+          false,
+          undefined,
+          false,
+          'SYSTEM_ERROR'
+        );
+      }
+      res.status(200).json({
+        message: 'User has been Send the OTP code to user Email',
+        code: 'SUCCESSFULLY_SENT_OTP',
+      });
+    } else {
+      const { error } = passwordResetRequestSchema.validate(req.body);
+      if (error) {
+        throw new AppError(
+          error.details[0].message,
+          400,
+          true,
+          undefined,
+          false,
+          'SCHEMA_VALIDATE_ERROR'
+        );
+      }
+      const isSend = await userOTPreqViaEmail(req.body.email, req.redis);
+
+      if (!isSend) {
+        throw new AppError(
+          'Something Went Wrong While Sending The Email',
+          500,
+          false,
+          undefined,
+          false,
+          'SYSTEM_ERROR'
+        );
+      }
+      res.status(200).json({
+        message: 'User has been Send the OTP code to user Email',
+        code: 'SUCCESSFULLY_SENT_OTP',
+      });
+    }
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export {
+  createUserAccount,
+  loginUserAccount,
+  logoutUserAccount,
+  reqPassResetOTPUserAccount,
+};

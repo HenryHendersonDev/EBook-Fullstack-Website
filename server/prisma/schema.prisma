@@ -29,12 +29,22 @@ model User {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   session       Sessions[]
+  otp           OTP[]
   orders        Order[]
   reviews       Review[]
   wishlist      Wishlist?
   wishlistItems WishlistItem[]
   profileImage  String?
   imagePublicID String?
+}
+
+model OTP {
+  id        String   @id @default(uuid())
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  otp       String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Sessions {

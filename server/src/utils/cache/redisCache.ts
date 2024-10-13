@@ -7,7 +7,7 @@ interface IRedisService {
     value: string,
     redis: Redis | null,
     expireTime: number,
-    tag?: 'token'
+    tag?: 'token' | 'session' | 'otp'
   ) => Promise<boolean | null>;
   get: (key: string, redis: Redis | null) => Promise<string | null>;
   delete: (key: string, redis: Redis | null) => Promise<boolean | void>;
@@ -19,7 +19,7 @@ class RedisService implements IRedisService {
     value: string,
     redis: Redis | null,
     expireTime: number,
-    tag?: 'token'
+    tag?: 'token' | 'session' | 'otp'
   ): Promise<boolean | null> {
     try {
       if (!redis) {
