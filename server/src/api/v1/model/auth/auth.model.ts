@@ -217,7 +217,18 @@ const setNewPassword = async (
     });
     return user;
   } catch (error) {
-    if (error instanceof AppError) {
+    if (error instanceof PrismaClientKnownRequestError) {
+      if (error.code === 'P2025') {
+        throw new AppError(
+          'User Not Found',
+          404,
+          true,
+          undefined,
+          false,
+          'USER_NOT_FOUND'
+        );
+      }
+    } else if (error instanceof AppError) {
       throw error;
     } else if (error instanceof Error) {
       throw new AppError(
@@ -267,6 +278,138 @@ const findOTPCode = async (
   }
 };
 
+const UpdateUserFirstName = async (
+  firstName: string,
+  id: string
+): Promise<User | null> => {
+  try {
+    if (!prisma) throw new Error('Prisma client is not initialized');
+    const newUser = await prisma.user.update({
+      where: {
+        id,
+      },
+      data: {
+        firstName,
+      },
+    });
+
+    return newUser;
+  } catch (error) {
+    if (error instanceof PrismaClientKnownRequestError) {
+      if (error.code === 'P2025') {
+        throw new AppError(
+          'User Not Found',
+          404,
+          true,
+          undefined,
+          false,
+          'USER_NOT_FOUND'
+        );
+      }
+    } else if (error instanceof AppError) {
+      throw error;
+    } else if (error instanceof Error) {
+      throw new AppError(
+        'Something went Wrong While Saving New User',
+        500,
+        false,
+        error,
+        true,
+        'SYSTEM_ERROR'
+      );
+    }
+    throw new Error(`An unexpected error occurred: ${error}`);
+  }
+};
+
+const UpdateUserLastName = async (
+  lastName: string,
+  id: string
+): Promise<User | null> => {
+  try {
+    if (!prisma) throw new Error('Prisma client is not initialized');
+    const newUser = await prisma.user.update({
+      where: {
+        id,
+      },
+      data: {
+        lastName,
+      },
+    });
+    return newUser;
+  } catch (error) {
+    if (error instanceof PrismaClientKnownRequestError) {
+      if (error.code === 'P2025') {
+        throw new AppError(
+          'User Not Found',
+          404,
+          true,
+          undefined,
+          false,
+          'USER_NOT_FOUND'
+        );
+      }
+    } else if (error instanceof AppError) {
+      throw error;
+    } else if (error instanceof Error) {
+      throw new AppError(
+        'Something went Wrong While Saving New User',
+        500,
+        false,
+        error,
+        true,
+        'SYSTEM_ERROR'
+      );
+    }
+    throw new Error(`An unexpected error occurred: ${error}`);
+  }
+};
+
+const UpdateUserFullName = async (
+  firstName: string,
+  lastName: string,
+  id: string
+): Promise<User | null> => {
+  try {
+    if (!prisma) throw new Error('Prisma client is not initialized');
+    const newUser = await prisma.user.update({
+      where: {
+        id,
+      },
+      data: {
+        firstName,
+        lastName,
+      },
+    });
+    return newUser;
+  } catch (error) {
+    if (error instanceof PrismaClientKnownRequestError) {
+      if (error.code === 'P2025') {
+        throw new AppError(
+          'User Not Found',
+          404,
+          true,
+          undefined,
+          false,
+          'USER_NOT_FOUND'
+        );
+      }
+    } else if (error instanceof AppError) {
+      throw error;
+    } else if (error instanceof Error) {
+      throw new AppError(
+        'Something went Wrong While Saving New User',
+        500,
+        false,
+        error,
+        true,
+        'SYSTEM_ERROR'
+      );
+    }
+    throw new Error(`An unexpected error occurred: ${error}`);
+  }
+};
+
 export {
   saveNewUserOnDB,
   findUserOnDB,
@@ -275,4 +418,7 @@ export {
   findUserOnDBViaID,
   setNewPassword,
   findOTPCode,
+  UpdateUserFirstName,
+  UpdateUserLastName,
+  UpdateUserFullName,
 };

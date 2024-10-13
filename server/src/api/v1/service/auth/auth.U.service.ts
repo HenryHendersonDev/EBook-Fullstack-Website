@@ -6,6 +6,9 @@ import {
   findUserOnDB,
   findOTPCode,
   setNewPassword,
+  UpdateUserFullName,
+  UpdateUserLastName,
+  UpdateUserFirstName,
 } from '../../model/auth/auth.model';
 import jwtService from '@/utils/auth/jwt';
 import gen6DNumber from '@/utils/otpGen';
@@ -284,9 +287,103 @@ const PasswordResetEmail = async (
   }
 };
 
+// in This Function we will Update user First and Last names
+const updateName = async (
+  accessToken: string,
+  redis: Redis | null,
+  firstName?: string,
+  lastName?: string
+): Promise<boolean> => {
+  try {
+    const userSession = jwtService.verify(accessToken, false);
+    if (!userSession) {
+      throw new AppError(
+        'Invalid Access Token',
+        401,
+        true,
+        undefined,
+        false,
+        'UNAUTHORIZED_INVALID_TOKEN'
+      );
+    }
+    const userID = await findUserOnDBviaSessionID(userSession.id, redis);
+    if (!userID) {
+      throw new AppError(
+        'User Not Found',
+        404,
+        true,
+        undefined,
+        false,
+        'USER_NOT_FOUND'
+      );
+    }
+
+    if (firstName && !lastName) {
+      const newUser = await UpdateUserFirstName(firstName, userID.userId);
+      if (!newUser) {
+        throw new AppError(
+          'Something Went Wrong Updating user firstName',
+          500,
+          false,
+          undefined,
+          false,
+          'SYSTEM_ERROR'
+        );
+      }
+      return true;
+    } else if (lastName && !firstName) {
+      const newUser = await UpdateUserLastName(lastName, userID.userId);
+      if (!newUser) {
+        throw new AppError(
+          'Something Went Wrong Updating user firstName',
+          500,
+          false,
+          undefined,
+          false,
+          'SYSTEM_ERROR'
+        );
+      }
+      return true;
+    } else if (firstName && lastName) {
+      const newUser = await UpdateUserFullName(
+        firstName,
+        lastName,
+        userID.userId
+      );
+      if (!newUser) {
+        throw new AppError(
+          'Something Went Wrong Updating user firstName',
+          500,
+          false,
+          undefined,
+          false,
+          'SYSTEM_ERROR'
+        );
+      }
+      return true;
+    }
+    return false;
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw error;
+    } else if (error instanceof Error) {
+      throw new AppError(
+        'Something Went Wrong While Registering user',
+        500,
+        false,
+        error,
+        true,
+        'SYSTEM_ERROR'
+      );
+    }
+    throw new Error(`An unexpected error occurred: ${error}`);
+  }
+};
+
 export {
   userOTPreqViaToken,
   userOTPreqViaEmail,
   PasswordResetToken,
   PasswordResetEmail,
+  updateName,
 };

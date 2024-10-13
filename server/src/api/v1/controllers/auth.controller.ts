@@ -5,6 +5,7 @@ import {
   passwordResetRequestSchema,
   passwordResetSchemaToken,
   passwordResetSchema,
+  NameChange,
 } from '@/api/v1/validators/index.Validation';
 import AppError from '@/models/AppErrorModel';
 import userRegisterService from '../service/auth/auth.C.service';
@@ -13,6 +14,7 @@ import userLogoutService from '../service/auth/auth.D.service';
 import {
   PasswordResetEmail,
   PasswordResetToken,
+  updateName,
   userOTPreqViaEmail,
   userOTPreqViaToken,
 } from '../service/auth/auth.U.service';
@@ -304,10 +306,65 @@ const passwordReset = async (
   }
 };
 
+// This controller For Resetting The Password using Token or Email and new Password
+const changeUser_Names = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { accessToken } = req.signedCookies;
+    const { error } = NameChange.validate(req.body);
+    if (!accessToken) {
+      throw new AppError(
+        'You are not logged in',
+        401,
+        true,
+        undefined,
+        false,
+        'NOT_LOGGED_IN'
+      );
+    }
+    if (error) {
+      throw new AppError(
+        error.details[0].message,
+        400,
+        true,
+        undefined,
+        false,
+        'SCHEMA_VALIDATE_ERROR'
+      );
+    }
+    const update = await updateName(
+      accessToken,
+      req.redis,
+      req.body.firstName,
+      req.body.lastName
+    );
+    if (!update) {
+      throw new AppError(
+        'Something Went Wrong Updating user Names',
+        500,
+        false,
+        undefined,
+        false,
+        'SYSTEM_ERROR'
+      );
+    }
+    res.status(200).json({
+      message: 'User has been successfully Updated The names.',
+      code: 'SUCCESSFULLY_RESET_UPDATED_NAMES',
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 export {
   createUserAccount,
   loginUserAccount,
   logoutUserAccount,
   reqPassResetOTPUserAccount,
   passwordReset,
+  changeUser_Names,
 };

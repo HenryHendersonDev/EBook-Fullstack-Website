@@ -28,6 +28,11 @@ export const passwordResetSchemaToken = Joi.object({
   newPassword: Joi.string().min(6).required(),
 });
 
+export const NameChange = Joi.object({
+  firstName: Joi.string().min(1),
+  lastName: Joi.string().min(1),
+}).or('firstName', 'lastName');
+
 // 2. 📚 **Product Catalog**
 export const createProductSchema = Joi.object({
   title: Joi.string().min(1).required(),

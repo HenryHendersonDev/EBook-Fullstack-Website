@@ -5,6 +5,7 @@ import {
   logoutUserAccount,
   reqPassResetOTPUserAccount,
   passwordReset,
+  changeUser_Names,
 } from '@/api/v1/controllers/auth.controller';
 import upload from '@/config/multerConfig';
 
@@ -15,5 +16,6 @@ router.post('/login', loginUserAccount);
 router.post('/logout', logoutUserAccount);
 router.post('/password-reset-request', reqPassResetOTPUserAccount);
 router.post('/password-reset', passwordReset);
+router.post('/change-name', changeUser_Names);
 
 export default router;
