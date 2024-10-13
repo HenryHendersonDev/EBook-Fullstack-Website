@@ -2,7 +2,6 @@ import prisma from '@/config/prismaClientConfig';
 import AppError from '@/models/AppErrorModel';
 import redisService from '@/utils/cache/redisCache';
 import Redis from 'ioredis';
-import { Sessions } from '@prisma/client';
 
 // Helper function to handle errors
 const handleError = (error, context) => {
@@ -15,7 +14,12 @@ const handleError = (error, context) => {
 };
 
 // Function to create a refresh record
-const createRefreshRecord = async (sessionId, userId, refreshToken, redis) => {
+const createRefreshRecord = async (
+  sessionId,
+  userId,
+  refreshToken,
+  redis: Redis | null
+) => {
   try {
     if (!prisma) return null;
 
@@ -27,7 +31,8 @@ const createRefreshRecord = async (sessionId, userId, refreshToken, redis) => {
       saveRefreshToken.id,
       JSON.stringify(saveRefreshToken),
       redis,
-      60 * 24 * 7
+      604800,
+      'token'
     );
 
     return refreshToken;
@@ -37,7 +42,7 @@ const createRefreshRecord = async (sessionId, userId, refreshToken, redis) => {
 };
 
 // Function to get a refresh record
-const getRefreshRecord = async (sessionID, redis) => {
+const getRefreshRecord = async (sessionID, redis: Redis | null) => {
   try {
     if (!prisma) return null;
 
@@ -66,7 +71,8 @@ const getRefreshRecord = async (sessionID, redis) => {
       refreshToken.id,
       refreshToken.token,
       redis,
-      60 * 24 * 7
+      604800,
+      'token'
     );
 
     return refreshToken.token;

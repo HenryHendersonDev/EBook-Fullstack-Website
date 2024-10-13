@@ -6,7 +6,8 @@ interface IRedisService {
     key: string,
     value: string,
     redis: Redis | null,
-    expireTime: number
+    expireTime: number,
+    tag?: 'token'
   ) => Promise<boolean | null>;
   get: (key: string, redis: Redis | null) => Promise<string | null>;
   delete: (key: string, redis: Redis | null) => Promise<boolean | void>;
@@ -17,14 +18,17 @@ class RedisService implements IRedisService {
     key: string,
     value: string,
     redis: Redis | null,
-    expireTime: number
+    expireTime: number,
+    tag?: 'token'
   ): Promise<boolean | null> {
     try {
       if (!redis) {
         return null;
       }
-      const expireMS = expireTime * 60 * 1000;
-      await redis.set(key, value, 'EX', expireMS);
+      await redis.set(key, value, 'EX', expireTime);
+      if (tag) {
+        await redis.sadd(tag, key);
+      }
       return true;
     } catch (error) {
       throw new AppError(

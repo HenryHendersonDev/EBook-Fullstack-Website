@@ -7,3 +7,4 @@ dev
 prisma/migrations
 logs
 coverage
+src/local.ts

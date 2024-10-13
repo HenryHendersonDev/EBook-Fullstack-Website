@@ -7,10 +7,10 @@ const setRedis =
   () => async (req: Request, res: Response, next: NextFunction) => {
     try {
       if (APPLICATION_CONFIG.REDIS_CACHE) {
-        const client = await redisClient(); // Get Redis client
-        req.redis = client; // Attach Redis client to the request object
+        const client = await redisClient();
+        req.redis = client;
       } else {
-        req.redis = null; // Caching is disabled
+        req.redis = null;
       }
     } catch (error) {
       console.error(
@@ -18,10 +18,10 @@ const setRedis =
           'Warning: Redis server not available. Falling back to in-memory rate limit.'
         )
       );
-      req.redis = null; // Ensure Redis is null on error
+      req.redis = null;
     }
 
-    return next(); // Proceed to the next middleware
+    return next();
   };
 
 export default setRedis;

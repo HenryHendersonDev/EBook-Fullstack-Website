@@ -7,6 +7,7 @@ import prisma from '../../src/config/prismaClientConfig';
 describe('POST /auth/register', () => {
   it('Should return 201, set the Access Token cookie, and respond with JSON.', async () => {
     await prisma?.user.deleteMany();
+
     const imgDIR = path.join(__dirname, './avatar.jpg');
 
     const body = {
@@ -46,7 +47,7 @@ describe('POST /auth/register', () => {
     expect(accessTokenCookie).toBeDefined();
   });
 
-  it('Should Return 409 with Error Code SUCCESSFULLY_CREATED ', async () => {
+  it('Should Return 409 with Error Code UNIQUE_CONSTRAINT_FAILED ', async () => {
     const imgDIR = path.join(__dirname, './avatar.jpg');
 
     const body = {

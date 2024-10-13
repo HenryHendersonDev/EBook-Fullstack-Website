@@ -160,14 +160,61 @@
 //   console.log(`Server is running at http://localhost:${PORT}`);
 // });
 //
-import { handleDelete } from './config/cloudinaryConfig';
-import path from 'path';
+//import { handleDelete } from './config/cloudinaryConfig';
+//import path from 'path';
+//
+//(async () => {
+//  try {
+//    const newImg = await handleDelete('sxdwc4nsrw0xlgijdbpx', //'image');
+//    console.log(newImg);
+//  } catch (error) {
+//    console.log(error);
+//  }
+//})();
+
+// index.js or your main file
+import redisClient from './config/redisConfig';
 
 (async () => {
-  try {
-    const newImg = await handleDelete('sxdwc4nsrw0xlgijdbpx', 'image');
-    console.log(newImg);
-  } catch (error) {
-    console.log(error);
-  }
+  const client = await redisClient();
+  await client.flushdb();
+  // Function to add a record with a tag
+  const addRecord = async (key, value, tag) => {
+    // Store the record with an expiration time of 10 minutes
+    await client.set(key, value, 'EX', 10 * 60);
+    // Add the key to the corresponding tag set
+    await client.sadd(tag, key);
+    console.log(`Added ${key} under tag ${tag}`);
+  };
+
+  // Adding initial records
+  await addRecord('apple', 'A juicy red fruit', 'fruits');
+  await addRecord('lion', 'The king of the jungle', 'animals');
+
+  // Adding additional records
+  await addRecord('banana', 'A long yellow fruit', 'fruits');
+  await addRecord('tiger', 'A big striped cat', 'animals');
+
+  // Function to retrieve all records for a specific tag
+  const getRecordsByTag = async (tag) => {
+    const keys = await client.smembers(tag); // Get all keys associated with the tag
+    const records = await Promise.all(
+      keys.map(async (key) => {
+        const value = await client.get(key);
+        return { key, value }; // Return an object with key and value
+      })
+    );
+    return records;
+  };
+
+  // Retrieving records
+  const fruitRecords = await getRecordsByTag('fruits');
+  const animalRecords = await getRecordsByTag('animals');
+
+  // Displaying records in a table format
+  console.table(fruitRecords);
+  console.table(animalRecords);
+
+  // Clean up the Redis client
+  await client.quit();
 })();

@@ -1,5 +1,6 @@
 import request from 'supertest';
 import app from '../../src/app';
+import fs from 'fs';
 import path from 'path';
 import { FixedData, data } from '../utils/userData';
 
@@ -12,8 +13,7 @@ describe('POST /auth/login', () => {
 
     const res = await request(app)
       .post('/auth/login')
-      .field('email', body.email)
-      .field('password', body.password)
+      .send(body)
       .expect('Content-Type', /json/)
       .expect(200);
 
@@ -34,6 +34,16 @@ describe('POST /auth/login', () => {
         .find((cookie) => cookie.startsWith('accessToken='));
     }
 
+    const filePath = path.join(__dirname, '../data/accessToken.txt');
+
+    fs.writeFile(filePath, accessTokenCookie, (err) => {
+      if (err) {
+        console.error('Error writing to file:', err);
+        return;
+      }
+      console.log('String saved to file!');
+    });
+
     expect(accessTokenCookie).toBeDefined();
   });
 
@@ -45,8 +55,7 @@ describe('POST /auth/login', () => {
 
     const res = await request(app)
       .post('/auth/login')
-      .field('email', body.email)
-      .field('password', body.password)
+      .send(body)
       .expect('Content-Type', /json/)
       .expect(404);
 
@@ -61,8 +70,7 @@ describe('POST /auth/login', () => {
 
     const res = await request(app)
       .post('/auth/login')
-      .field('email', body.email)
-      .field('password', body.password)
+      .send(body)
       .expect('Content-Type', /json/)
       .expect(400);
 
