@@ -7,6 +7,7 @@
     "test": "nodemon --exec ts-node -r tsconfig-paths/register -r dotenv/config src/local.ts",
     "start": "node dist/test.js",
     "build": "rimraf dist && rimraf tsconfig.tsbuildinfo && tsc && tsc-alias -p tsconfig.json",
+    "clean": "rimraf dist && rimraf coverage && rimraf tsconfig.tsbuildinfo && rimraf logs ",
     "prisma:init": "npx prisma init",
     "prisma:migrate": "npx prisma migrate dev",
     "prisma:reset": "rimraf prisma/migrations && npx prisma migrate reset && npm run prisma:migrate && npm run prisma:generate",

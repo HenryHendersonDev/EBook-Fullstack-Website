@@ -8,6 +8,8 @@ export const data = {
 };
 
 const fixedEmail = 'your.fixed.email@example.com';
+const fixedPassword = `myPassword@2000`;
 export const FixedData = {
   email: fixedEmail,
+  password: fixedPassword,
 };

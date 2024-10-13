@@ -1,7 +1,8 @@
 import prisma from '@/config/prismaClientConfig';
 import AppError from '@/models/AppErrorModel';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
-import Redis from 'ioredis';
+import { User } from '@prisma/client';
+
 interface Register {
   email: string;
   password: string;
@@ -10,6 +11,7 @@ interface Register {
   filePath: string | null;
   imagePublicID?: string | null;
 }
+
 const saveNewUserOnDB = async (user: Register): Promise<string> => {
   try {
     if (!prisma) throw new Error('Prisma client is not initialized');
@@ -52,4 +54,30 @@ const saveNewUserOnDB = async (user: Register): Promise<string> => {
   }
 };
 
-export { saveNewUserOnDB };
+const findUserOnDB = async (email: string): Promise<User | null> => {
+  try {
+    if (!prisma) throw new Error('Prisma client is not initialized');
+    const isUser = await prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
+    return isUser;
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw error;
+    } else if (error instanceof Error) {
+      throw new AppError(
+        'Something went Wrong While Saving New User',
+        500,
+        false,
+        error,
+        true,
+        'SYSTEM_ERROR'
+      );
+    }
+    throw new Error(`An unexpected error occurred: ${error}`);
+  }
+};
+
+export { saveNewUserOnDB, findUserOnDB };

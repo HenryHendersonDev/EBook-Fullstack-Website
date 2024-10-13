@@ -13,6 +13,7 @@ interface Register {
   filePath: string | null;
 }
 
+// in this service we will get user data and save the db then return the access token.
 const userRegisterService = async (user: Register, redis: Redis | null) => {
   try {
     const hashPassword = await passwordService.generate(user.password);

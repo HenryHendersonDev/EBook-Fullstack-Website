@@ -2,14 +2,16 @@ import request from 'supertest';
 import app from '../../src/app';
 import path from 'path';
 import { FixedData, data } from '../utils/userData';
+import prisma from '../../src/config/prismaClientConfig';
 
 describe('POST /auth/register', () => {
   it('Should return 201, set the Access Token cookie, and respond with JSON.', async () => {
+    await prisma?.user.deleteMany();
     const imgDIR = path.join(__dirname, './avatar.jpg');
 
     const body = {
       email: FixedData.email,
-      password: data.password,
+      password: FixedData.password,
       firstName: data.firstName,
       lastName: data.lastName,
     };
