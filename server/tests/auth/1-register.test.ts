@@ -1,8 +1,7 @@
 import request from 'supertest';
 import app from '../../src/app';
 import path from 'path';
-import fs from 'fs';
-import { FixedData, data } from '../utils/userData';
+import { FixedData, generateRandomData } from '../utils/userData';
 import prisma from '../../src/config/prismaClientConfig';
 import { exec } from 'child_process';
 
@@ -10,9 +9,9 @@ describe('POST /auth/register', () => {
   it('Should return 201, set the Access Token cookie, and respond with JSON.', async () => {
     await prisma?.user.deleteMany();
     exec('rdcli flushall');
-    fs.unlinkSync(path.join(__dirname, '../data/accessToken.txt'));
-    const imgDIR = path.join(__dirname, './avatar.jpg');
 
+    const imgDIR = path.join(__dirname, './avatar.jpg');
+    const data = generateRandomData();
     const body = {
       email: FixedData.email,
       password: FixedData.password,
@@ -52,7 +51,7 @@ describe('POST /auth/register', () => {
 
   it('Should Return 409 with Error Code UNIQUE_CONSTRAINT_FAILED ', async () => {
     const imgDIR = path.join(__dirname, './avatar.jpg');
-
+    const data = generateRandomData();
     const body = {
       email: FixedData.email,
       password: data.password,

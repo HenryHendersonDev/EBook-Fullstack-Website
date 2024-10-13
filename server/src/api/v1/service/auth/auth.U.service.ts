@@ -4,6 +4,8 @@ import {
   findUserOnDBviaSessionID,
   findUserOnDBViaID,
   findUserOnDB,
+  findOTPCode,
+  setNewPassword,
 } from '../../model/auth/auth.model';
 import jwtService from '@/utils/auth/jwt';
 import gen6DNumber from '@/utils/otpGen';
@@ -139,4 +141,152 @@ const userOTPreqViaEmail = async (
   }
 };
 
-export { userOTPreqViaToken, userOTPreqViaEmail };
+// in This Function we will Get the OTP code and Token Then Reset The password
+const PasswordResetToken = async (
+  accessToken: string,
+  otp: string,
+  newPassword: string,
+  redis: Redis | null
+): Promise<string> => {
+  try {
+    const userSession = jwtService.verify(accessToken, false);
+    if (!userSession) {
+      throw new AppError(
+        'Invalid Access Token',
+        401,
+        true,
+        undefined,
+        false,
+        'UNAUTHORIZED_INVALID_TOKEN'
+      );
+    }
+    const userID = await findUserOnDBviaSessionID(userSession.id, redis);
+    if (!userID) {
+      throw new AppError(
+        'User Not Found',
+        404,
+        true,
+        undefined,
+        false,
+        'USER_NOT_FOUND'
+      );
+    }
+    const user = await findUserOnDBViaID(userID.userId);
+    if (!user) {
+      throw new AppError(
+        'User Not Found',
+        404,
+        true,
+        undefined,
+        false,
+        'USER_NOT_FOUND'
+      );
+    }
+
+    const isTrueOTP = await findOTPCode(user.id, otp, redis);
+    if (!isTrueOTP) {
+      throw new AppError(
+        'Invalid Otp Code please Try again',
+        400,
+        true,
+        undefined,
+        false,
+        'INVALID_OTP'
+      );
+    }
+    const passwordSet = await setNewPassword(user.id, newPassword, redis);
+    if (!passwordSet) {
+      throw new AppError(
+        'Something Went Wrong Updating user password',
+        500,
+        false,
+        undefined,
+        false,
+        'SYSTEM_ERROR'
+      );
+    }
+    const newToken = await jwtService.sign(user.id, redis);
+    return newToken;
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw error;
+    } else if (error instanceof Error) {
+      throw new AppError(
+        'Something Went Wrong While Registering user',
+        500,
+        false,
+        error,
+        true,
+        'SYSTEM_ERROR'
+      );
+    }
+    throw new Error(`An unexpected error occurred: ${error}`);
+  }
+};
+
+// in This Function we will Get the OTP code and Email Then Reset The password
+const PasswordResetEmail = async (
+  email: string,
+  otp: string,
+  newPassword: string,
+  redis: Redis | null
+): Promise<string> => {
+  try {
+    const DBuser = await findUserOnDB(email);
+    if (!DBuser) {
+      throw new AppError(
+        'User Not Found',
+        404,
+        true,
+        undefined,
+        false,
+        'USER_NOT_FOUND'
+      );
+    }
+    const isTrueOTP = await findOTPCode(DBuser.id, otp, redis);
+    if (!isTrueOTP) {
+      throw new AppError(
+        'Invalid Otp Code please Try again',
+        400,
+        true,
+        undefined,
+        false,
+        'INVALID_OTP'
+      );
+    }
+    const passwordSet = await setNewPassword(DBuser.id, newPassword, redis);
+    if (!passwordSet) {
+      throw new AppError(
+        'Something Went Wrong Updating user password',
+        500,
+        false,
+        undefined,
+        false,
+        'SYSTEM_ERROR'
+      );
+    }
+    const newToken = await jwtService.sign(DBuser.id, redis);
+    return newToken;
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw error;
+    } else if (error instanceof Error) {
+      throw new AppError(
+        'Something Went Wrong While Registering user',
+        500,
+        false,
+        error,
+        true,
+        'SYSTEM_ERROR'
+      );
+    }
+    throw new Error(`An unexpected error occurred: ${error}`);
+  }
+};
+
+export {
+  userOTPreqViaToken,
+  userOTPreqViaEmail,
+  PasswordResetToken,
+  PasswordResetEmail,
+};

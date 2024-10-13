@@ -43,7 +43,7 @@ model OTP {
   userId    String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  otp       String
+  otp       String   @unique
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 

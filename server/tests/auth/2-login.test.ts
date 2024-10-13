@@ -2,7 +2,7 @@ import request from 'supertest';
 import app from '../../src/app';
 import fs from 'fs';
 import path from 'path';
-import { FixedData, data } from '../utils/userData';
+import { FixedData, generateRandomData } from '../utils/userData';
 
 describe('POST /auth/login', () => {
   it('Should return 200, set the Access Token cookie, and respond with JSON.', async () => {
@@ -48,6 +48,7 @@ describe('POST /auth/login', () => {
   });
 
   it('Should Return 404 with Error Code USER_NOT_FOUND ', async () => {
+    const data = generateRandomData();
     const body = {
       email: data.email,
       password: data.password,
@@ -63,6 +64,7 @@ describe('POST /auth/login', () => {
   });
 
   it('Should Return 400 with Error Code INVALID_PASSWORD ', async () => {
+    const data = generateRandomData();
     const body = {
       email: FixedData.email,
       password: data.password,

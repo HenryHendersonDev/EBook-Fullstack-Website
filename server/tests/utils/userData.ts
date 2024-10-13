@@ -1,11 +1,12 @@
 import { faker } from '@faker-js/faker';
 
-export const data = {
+export const generateRandomData = () => ({
   email: faker.internet.email(),
   password: faker.internet.password(),
   firstName: faker.name.firstName(),
   lastName: faker.name.lastName(),
-};
+  otp: faker.number.int({ min: 100000, max: 999999 }).toString(),
+});
 
 const fixedEmail = 'your.fixed.email@example.com';
 const fixedPassword = `myPassword@2000`;

@@ -18,6 +18,12 @@ export const passwordResetRequestSchema = Joi.object({
 });
 
 export const passwordResetSchema = Joi.object({
+  email: Joi.string().email().required(),
+  otp: Joi.string().length(6).required(),
+  newPassword: Joi.string().min(6).required(),
+});
+
+export const passwordResetSchemaToken = Joi.object({
   otp: Joi.string().length(6).required(),
   newPassword: Joi.string().min(6).required(),
 });

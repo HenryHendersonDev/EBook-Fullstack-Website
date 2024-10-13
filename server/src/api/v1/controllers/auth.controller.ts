@@ -3,12 +3,16 @@ import {
   registerSchema,
   loginSchema,
   passwordResetRequestSchema,
+  passwordResetSchemaToken,
+  passwordResetSchema,
 } from '@/api/v1/validators/index.Validation';
 import AppError from '@/models/AppErrorModel';
 import userRegisterService from '../service/auth/auth.C.service';
 import userLoginService from '../service/auth/auth.R.service';
 import userLogoutService from '../service/auth/auth.D.service';
 import {
+  PasswordResetEmail,
+  PasswordResetToken,
   userOTPreqViaEmail,
   userOTPreqViaToken,
 } from '../service/auth/auth.U.service';
@@ -202,9 +206,108 @@ const reqPassResetOTPUserAccount = async (
   }
 };
 
+// This controller For Resetting The Password using Token or Email and new Password
+const passwordReset = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { accessToken } = req.signedCookies;
+    if (accessToken) {
+      const { error } = passwordResetSchemaToken.validate(req.body);
+      if (error) {
+        throw new AppError(
+          error.details[0].message,
+          400,
+          true,
+          undefined,
+          false,
+          'SCHEMA_VALIDATE_ERROR'
+        );
+      }
+      const token = await PasswordResetToken(
+        accessToken,
+        req.body.otp,
+        req.body.newPassword,
+        req.redis
+      );
+      if (!token) {
+        throw new AppError(
+          'Something Went Wrong While Sending The Email',
+          500,
+          false,
+          undefined,
+          false,
+          'SYSTEM_ERROR'
+        );
+      }
+      res
+        .cookie('accessToken', token, {
+          httpOnly: true,
+          secure: process.env['NODE_ENV'] === 'production',
+          sameSite: 'strict',
+          signed: true,
+          expires: new Date(Date.now() + 1000 * 60 * 15),
+          path: '/',
+        })
+        .status(200)
+        .json({
+          message: 'User has been successfully Reset the password.',
+          code: 'SUCCESSFULLY_RESET_PASSWORD',
+        });
+    } else {
+      const { error } = passwordResetSchema.validate(req.body);
+      if (error) {
+        throw new AppError(
+          error.details[0].message,
+          400,
+          true,
+          undefined,
+          false,
+          'SCHEMA_VALIDATE_ERROR'
+        );
+      }
+      const token = await PasswordResetEmail(
+        req.body.email,
+        req.body.otp,
+        req.body.newPassword,
+        req.redis
+      );
+      if (!token) {
+        throw new AppError(
+          'Something Went Wrong While Sending The Email',
+          500,
+          false,
+          undefined,
+          false,
+          'SYSTEM_ERROR'
+        );
+      }
+      res
+        .cookie('accessToken', token, {
+          httpOnly: true,
+          secure: process.env['NODE_ENV'] === 'production',
+          sameSite: 'strict',
+          signed: true,
+          expires: new Date(Date.now() + 1000 * 60 * 15),
+          path: '/',
+        })
+        .status(200)
+        .json({
+          message: 'User has been successfully Reset the password.',
+          code: 'SUCCESSFULLY_RESET_PASSWORD',
+        });
+    }
+  } catch (error) {
+    return next(error);
+  }
+};
+
 export {
   createUserAccount,
   loginUserAccount,
   logoutUserAccount,
   reqPassResetOTPUserAccount,
+  passwordReset,
 };

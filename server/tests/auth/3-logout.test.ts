@@ -1,6 +1,5 @@
 import request from 'supertest';
 import app from '../../src/app';
-import { FixedData, data } from '../utils/userData';
 import fs from 'fs';
 import path from 'path';
 
@@ -53,7 +52,7 @@ describe('POST /auth/logout', () => {
         .split('; ')
         .find((cookie) => cookie.startsWith('accessToken='));
     }
-
+    fs.unlinkSync(path.join(__dirname, '../data/accessToken.txt'));
     expect(accessTokenCookie).toBeDefined();
   });
 });

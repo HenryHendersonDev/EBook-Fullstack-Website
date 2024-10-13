@@ -1,8 +1,6 @@
 import request from 'supertest';
 import app from '../../src/app';
-import { data, FixedData } from '../utils/userData';
-import fs from 'fs';
-import path from 'path';
+import { generateRandomData, FixedData } from '../utils/userData';
 
 describe('POST /auth/password-reset-request', () => {
   it('Should Return 401 with Error Code UNAUTHORIZED_INVALID_TOKEN ', async () => {
@@ -42,6 +40,7 @@ describe('POST /auth/password-reset-request', () => {
   });
 
   it('Should return 200 and respond with JSON. using Cookie', async () => {
+    const data = generateRandomData();
     const body = {
       email: data.email,
       password: data.password,
