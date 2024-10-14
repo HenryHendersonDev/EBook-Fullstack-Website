@@ -7,6 +7,28 @@ import prisma from '../../src/config/prismaClientConfig';
 
 describe('POST /auth/password-reset', () => {
   it('Should Return 404 with Error Code USER_NOT_FOUND ', async () => {
+    const csrf_Token = await request(app)
+      .get('/protection/csrf')
+      .expect('Content-Type', /json/)
+      .expect(200);
+    const token = csrf_Token.body.token;
+    expect(token).toBeDefined();
+
+    const csrfCookies = csrf_Token.headers['set-cookie'];
+    expect(csrfCookies).toBeDefined();
+
+    let csrfCookie;
+
+    if (Array.isArray(csrfCookies)) {
+      csrfCookie = csrfCookies
+        .map((cookie) => cookie.split('; ')[0])
+        .find((cookie) => cookie.startsWith('csrf-Token='));
+    } else if (typeof csrfCookies === 'string') {
+      csrfCookie = csrfCookies
+        .split('; ')
+        .find((cookie) => cookie.startsWith('csrf-Token='));
+    }
+
     const data = generateRandomData();
     const body = {
       email: data.email,
@@ -17,6 +39,8 @@ describe('POST /auth/password-reset', () => {
     const res = await request(app)
       .post('/auth/password-reset')
       .send(body)
+      .set('x-csrf-token', token)
+      .set('Cookie', csrfCookie)
       .expect('Content-Type', /json/)
       .expect(404);
 
@@ -24,6 +48,28 @@ describe('POST /auth/password-reset', () => {
   });
 
   it('Should Return 404 with Error Code USER_NOT_FOUND ', async () => {
+    const csrf_Token = await request(app)
+      .get('/protection/csrf')
+      .expect('Content-Type', /json/)
+      .expect(200);
+    const token = csrf_Token.body.token;
+    expect(token).toBeDefined();
+
+    const csrfCookies = csrf_Token.headers['set-cookie'];
+    expect(csrfCookies).toBeDefined();
+
+    let csrfCookie;
+
+    if (Array.isArray(csrfCookies)) {
+      csrfCookie = csrfCookies
+        .map((cookie) => cookie.split('; ')[0])
+        .find((cookie) => cookie.startsWith('csrf-Token='));
+    } else if (typeof csrfCookies === 'string') {
+      csrfCookie = csrfCookies
+        .split('; ')
+        .find((cookie) => cookie.startsWith('csrf-Token='));
+    }
+
     const imgDIR = path.join(__dirname, './avatar.jpg');
     const data_2 = generateRandomData();
     const body_2 = {
@@ -35,6 +81,8 @@ describe('POST /auth/password-reset', () => {
 
     const res_2 = await request(app)
       .post('/auth/register')
+      .set('x-csrf-token', token)
+      .set('Cookie', csrfCookie)
       .field('email', body_2.email)
       .field('password', body_2.password)
       .field('firstName', body_2.firstName)
@@ -70,7 +118,8 @@ describe('POST /auth/password-reset', () => {
 
     const res = await request(app)
       .post('/auth/password-reset')
-      .set('Cookie', accessTokenCookie)
+      .set('x-csrf-token', token)
+      .set('Cookie', [accessTokenCookie, csrfCookie])
       .send(body)
       .expect('Content-Type', /json/)
       .expect(404);
@@ -78,6 +127,28 @@ describe('POST /auth/password-reset', () => {
   });
 
   it('Should Return 401 with Error Code UNAUTHORIZED_INVALID_TOKEN ', async () => {
+    const csrf_Token = await request(app)
+      .get('/protection/csrf')
+      .expect('Content-Type', /json/)
+      .expect(200);
+    const token = csrf_Token.body.token;
+    expect(token).toBeDefined();
+
+    const csrfCookies = csrf_Token.headers['set-cookie'];
+    expect(csrfCookies).toBeDefined();
+
+    let csrfCookie;
+
+    if (Array.isArray(csrfCookies)) {
+      csrfCookie = csrfCookies
+        .map((cookie) => cookie.split('; ')[0])
+        .find((cookie) => cookie.startsWith('csrf-Token='));
+    } else if (typeof csrfCookies === 'string') {
+      csrfCookie = csrfCookies
+        .split('; ')
+        .find((cookie) => cookie.startsWith('csrf-Token='));
+    }
+
     const data = generateRandomData();
     const body = {
       otp: data.otp,
@@ -86,10 +157,11 @@ describe('POST /auth/password-reset', () => {
 
     const res = await request(app)
       .post('/auth/password-reset')
-      .set(
-        'Cookie',
-        'accessToken=s%3AeyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImY0MTFjYzAwLTU4NGUtNDgwYy1hNzIxLWZhNzI2ZjJhNTk4MCIsImlhdCI6MTcyODgwODAwMiwiZXhwIjoxNzI4ODA4MDYyfQ.vGvUaxRfXypDyEa-z14_r42VxtDVHxuahUy7eHrAZfq2xiFOU0kXXTbbKIHFgbwspJ8-5gtFkaBFAC4XghBcrg.S0WNnyCk%2Fu0TBVrZJV7gquLLDOgWQmtl16Xy%2FG7jYVg'
-      )
+      .set('x-csrf-token', token)
+      .set('Cookie', [
+        'accessToken=s%3AeyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImY0MTFjYzAwLTU4NGUtNDgwYy1hNzIxLWZhNzI2ZjJhNTk4MCIsImlhdCI6MTcyODgwODAwMiwiZXhwIjoxNzI4ODA4MDYyfQ.vGvUaxRfXypDyEa-z14_r42VxtDVHxuahUy7eHrAZfq2xiFOU0kXXTbbKIHFgbwspJ8-5gtFkaBFAC4XghBcrg.S0WNnyCk%2Fu0TBVrZJV7gquLLDOgWQmtl16Xy%2FG7jYVg',
+        csrfCookie,
+      ])
       .send(body)
       .expect('Content-Type', /json/)
       .expect(401);
@@ -97,6 +169,28 @@ describe('POST /auth/password-reset', () => {
   });
 
   it('Should Return 400 with Error Code INVALID_OTP | using Token', async () => {
+    const csrf_Token = await request(app)
+      .get('/protection/csrf')
+      .expect('Content-Type', /json/)
+      .expect(200);
+    const token = csrf_Token.body.token;
+    expect(token).toBeDefined();
+
+    const csrfCookies = csrf_Token.headers['set-cookie'];
+    expect(csrfCookies).toBeDefined();
+
+    let csrfCookie;
+
+    if (Array.isArray(csrfCookies)) {
+      csrfCookie = csrfCookies
+        .map((cookie) => cookie.split('; ')[0])
+        .find((cookie) => cookie.startsWith('csrf-Token='));
+    } else if (typeof csrfCookies === 'string') {
+      csrfCookie = csrfCookies
+        .split('; ')
+        .find((cookie) => cookie.startsWith('csrf-Token='));
+    }
+
     const imgDIR = path.join(__dirname, './avatar.jpg');
     const data = generateRandomData();
     const body = {
@@ -108,6 +202,8 @@ describe('POST /auth/password-reset', () => {
 
     const res_2 = await request(app)
       .post('/auth/register')
+      .set('x-csrf-token', token)
+      .set('Cookie', csrfCookie)
       .field('email', body.email)
       .field('password', body.password)
       .field('firstName', body.firstName)
@@ -137,7 +233,8 @@ describe('POST /auth/password-reset', () => {
 
     const res = await request(app)
       .post('/auth/password-reset')
-      .set('Cookie', accessTokenCookie)
+      .set('x-csrf-token', token)
+      .set('Cookie', [accessTokenCookie, csrfCookie])
       .send(body_2)
       .expect('Content-Type', /json/)
       .expect(400);
@@ -145,6 +242,28 @@ describe('POST /auth/password-reset', () => {
   });
 
   it('Should Return 400 with Error Code INVALID_OTP | Using Email ', async () => {
+    const csrf_Token = await request(app)
+      .get('/protection/csrf')
+      .expect('Content-Type', /json/)
+      .expect(200);
+    const token = csrf_Token.body.token;
+    expect(token).toBeDefined();
+
+    const csrfCookies = csrf_Token.headers['set-cookie'];
+    expect(csrfCookies).toBeDefined();
+
+    let csrfCookie;
+
+    if (Array.isArray(csrfCookies)) {
+      csrfCookie = csrfCookies
+        .map((cookie) => cookie.split('; ')[0])
+        .find((cookie) => cookie.startsWith('csrf-Token='));
+    } else if (typeof csrfCookies === 'string') {
+      csrfCookie = csrfCookies
+        .split('; ')
+        .find((cookie) => cookie.startsWith('csrf-Token='));
+    }
+
     const imgDIR = path.join(__dirname, './avatar.jpg');
     const data = generateRandomData();
     const body = {
@@ -156,6 +275,8 @@ describe('POST /auth/password-reset', () => {
 
     const res_2 = await request(app)
       .post('/auth/register')
+      .set('x-csrf-token', token)
+      .set('Cookie', csrfCookie)
       .field('email', body.email)
       .field('password', body.password)
       .field('firstName', body.firstName)
@@ -175,12 +296,36 @@ describe('POST /auth/password-reset', () => {
 
     const res = await request(app)
       .post('/auth/password-reset')
+      .set('x-csrf-token', token)
+      .set('Cookie', csrfCookie)
       .send(body_2)
       .expect('Content-Type', /json/)
       .expect(400);
     expect(res.body.code).toBe('INVALID_OTP');
   });
   it('Should Return 200 with Error Code SUCCESSFULLY_RESET_PASSWORD | using Token', async () => {
+    const csrf_Token = await request(app)
+      .get('/protection/csrf')
+      .expect('Content-Type', /json/)
+      .expect(200);
+    const token = csrf_Token.body.token;
+    expect(token).toBeDefined();
+
+    const csrfCookies = csrf_Token.headers['set-cookie'];
+    expect(csrfCookies).toBeDefined();
+
+    let csrfCookie;
+
+    if (Array.isArray(csrfCookies)) {
+      csrfCookie = csrfCookies
+        .map((cookie) => cookie.split('; ')[0])
+        .find((cookie) => cookie.startsWith('csrf-Token='));
+    } else if (typeof csrfCookies === 'string') {
+      csrfCookie = csrfCookies
+        .split('; ')
+        .find((cookie) => cookie.startsWith('csrf-Token='));
+    }
+
     await new Promise((resolve) => setTimeout(resolve, 2500));
     await deleteAllEmails();
     await new Promise((resolve) => setTimeout(resolve, 2500));
@@ -197,6 +342,8 @@ describe('POST /auth/password-reset', () => {
 
     const res_2 = await request(app)
       .post('/auth/register')
+      .set('x-csrf-token', token)
+      .set('Cookie', csrfCookie)
       .field('email', body.email)
       .field('password', body.password)
       .field('firstName', body.firstName)
@@ -222,7 +369,8 @@ describe('POST /auth/password-reset', () => {
 
     const res_3 = await request(app)
       .post('/auth/otp-request')
-      .set('Cookie', accessTokenCookie)
+      .set('x-csrf-token', token)
+      .set('Cookie', [accessTokenCookie, csrfCookie])
       .expect('Content-Type', /json/)
       .expect(200);
 
@@ -237,7 +385,8 @@ describe('POST /auth/password-reset', () => {
 
     const res = await request(app)
       .post('/auth/password-reset')
-      .set('Cookie', accessTokenCookie)
+      .set('x-csrf-token', token)
+      .set('Cookie', [accessTokenCookie, csrfCookie])
       .send(body_2)
       .expect('Content-Type', /json/)
       .expect(200);
@@ -245,6 +394,28 @@ describe('POST /auth/password-reset', () => {
   });
 
   it('Should Return 200 with Error Code SUCCESSFULLY_RESET_PASSWORD | Using Email ', async () => {
+    const csrf_Token = await request(app)
+      .get('/protection/csrf')
+      .expect('Content-Type', /json/)
+      .expect(200);
+    const token = csrf_Token.body.token;
+    expect(token).toBeDefined();
+
+    const csrfCookies = csrf_Token.headers['set-cookie'];
+    expect(csrfCookies).toBeDefined();
+
+    let csrfCookie;
+
+    if (Array.isArray(csrfCookies)) {
+      csrfCookie = csrfCookies
+        .map((cookie) => cookie.split('; ')[0])
+        .find((cookie) => cookie.startsWith('csrf-Token='));
+    } else if (typeof csrfCookies === 'string') {
+      csrfCookie = csrfCookies
+        .split('; ')
+        .find((cookie) => cookie.startsWith('csrf-Token='));
+    }
+
     await new Promise((resolve) => setTimeout(resolve, 2500));
     await deleteAllEmails();
     await new Promise((resolve) => setTimeout(resolve, 2500));
@@ -259,6 +430,8 @@ describe('POST /auth/password-reset', () => {
 
     const res_2 = await request(app)
       .post('/auth/register')
+      .set('x-csrf-token', token)
+      .set('Cookie', csrfCookie)
       .field('email', body.email)
       .field('password', body.password)
       .field('firstName', body.firstName)
@@ -275,6 +448,9 @@ describe('POST /auth/password-reset', () => {
     };
     const res_3 = await request(app)
       .post('/auth/otp-request')
+      .set('x-csrf-token', token)
+      .set('Cookie', csrfCookie)
+
       .send(body_3)
       .expect('Content-Type', /json/)
       .expect(200);
@@ -290,6 +466,9 @@ describe('POST /auth/password-reset', () => {
 
     const res = await request(app)
       .post('/auth/password-reset')
+      .set('x-csrf-token', token)
+      .set('Cookie', csrfCookie)
+
       .send(body_2)
       .expect('Content-Type', /json/)
       .expect(200);

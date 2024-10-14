@@ -9,6 +9,27 @@ describe('POST /auth/register', () => {
   it('Should return 201, set the Access Token cookie, and respond with JSON.', async () => {
     await prisma?.user.deleteMany();
     exec('rdcli flushall');
+    const csrf_Token = await request(app)
+      .get('/protection/csrf')
+      .expect('Content-Type', /json/)
+      .expect(200);
+    const token = csrf_Token.body.token;
+    expect(token).toBeDefined();
+
+    const csrfCookies = csrf_Token.headers['set-cookie'];
+    expect(csrfCookies).toBeDefined();
+
+    let csrfCookie;
+
+    if (Array.isArray(csrfCookies)) {
+      csrfCookie = csrfCookies
+        .map((cookie) => cookie.split('; ')[0])
+        .find((cookie) => cookie.startsWith('csrf-Token='));
+    } else if (typeof csrfCookies === 'string') {
+      csrfCookie = csrfCookies
+        .split('; ')
+        .find((cookie) => cookie.startsWith('csrf-Token='));
+    }
 
     const imgDIR = path.join(__dirname, './avatar.jpg');
     const data = generateRandomData();
@@ -21,6 +42,8 @@ describe('POST /auth/register', () => {
 
     const res = await request(app)
       .post('/auth/register')
+      .set('x-csrf-token', token)
+      .set('Cookie', csrfCookie)
       .field('email', body.email)
       .field('password', body.password)
       .field('firstName', body.firstName)
@@ -50,6 +73,28 @@ describe('POST /auth/register', () => {
   });
 
   it('Should Return 409 with Error Code UNIQUE_CONSTRAINT_FAILED ', async () => {
+    const csrf_Token = await request(app)
+      .get('/protection/csrf')
+      .expect('Content-Type', /json/)
+      .expect(200);
+    const token = csrf_Token.body.token;
+    expect(token).toBeDefined();
+
+    const csrfCookies = csrf_Token.headers['set-cookie'];
+    expect(csrfCookies).toBeDefined();
+
+    let csrfCookie;
+
+    if (Array.isArray(csrfCookies)) {
+      csrfCookie = csrfCookies
+        .map((cookie) => cookie.split('; ')[0])
+        .find((cookie) => cookie.startsWith('csrf-Token='));
+    } else if (typeof csrfCookies === 'string') {
+      csrfCookie = csrfCookies
+        .split('; ')
+        .find((cookie) => cookie.startsWith('csrf-Token='));
+    }
+
     const imgDIR = path.join(__dirname, './avatar.jpg');
     const data = generateRandomData();
     const body = {
@@ -61,6 +106,8 @@ describe('POST /auth/register', () => {
 
     const res = await request(app)
       .post('/auth/register')
+      .set('x-csrf-token', token)
+      .set('Cookie', csrfCookie)
       .field('email', body.email)
       .field('password', body.password)
       .field('firstName', body.firstName)

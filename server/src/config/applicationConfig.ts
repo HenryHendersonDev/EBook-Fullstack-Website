@@ -5,7 +5,7 @@ const APPLICATION_CONFIG = {
   WINSTON_LOGGING: true,
   RATE_LIMIT: true,
   CONSOLE_APP_ERROR: true,
-  USE_CSRF: false,
+  USE_CSRF: true,
 };
 
 export { APPLICATION_CONFIG };

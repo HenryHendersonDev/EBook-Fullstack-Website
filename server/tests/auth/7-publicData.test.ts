@@ -6,8 +6,30 @@ import prisma from '../../src/config/prismaClientConfig';
 
 describe('POST /auth/me', () => {
   it('Should Return 401 with Error Code UNAUTHORIZED_INVALID_TOKEN ', async () => {
+    const csrf_Token = await request(app)
+      .get('/protection/csrf')
+      .expect('Content-Type', /json/)
+      .expect(200);
+    const token = csrf_Token.body.token;
+    expect(token).toBeDefined();
+
+    const csrfCookies = csrf_Token.headers['set-cookie'];
+    expect(csrfCookies).toBeDefined();
+
+    let csrfCookie;
+
+    if (Array.isArray(csrfCookies)) {
+      csrfCookie = csrfCookies
+        .map((cookie) => cookie.split('; ')[0])
+        .find((cookie) => cookie.startsWith('csrf-Token='));
+    } else if (typeof csrfCookies === 'string') {
+      csrfCookie = csrfCookies
+        .split('; ')
+        .find((cookie) => cookie.startsWith('csrf-Token='));
+    }
     const res = await request(app)
       .get('/auth/me')
+      .set('x-csrf-token', token)
       .set(
         'Cookie',
         'accessToken=s%3AeyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImY0MTFjYzAwLTU4NGUtNDgwYy1hNzIxLWZhNzI2ZjJhNTk4MCIsImlhdCI6MTcyODgwODAwMiwiZXhwIjoxNzI4ODA4MDYyfQ.vGvUaxRfXypDyEa-z14_r42VxtDVHxuahUy7eHrAZfq2xiFOU0kXXTbbKIHFgbwspJ8-5gtFkaBFAC4XghBcrg.S0WNnyCk%2Fu0TBVrZJV7gquLLDOgWQmtl16Xy%2FG7jYVg'
@@ -18,6 +40,27 @@ describe('POST /auth/me', () => {
   });
 
   it('Should Return 404 with Error Code USER_NOT_FOUND ', async () => {
+    const csrf_Token = await request(app)
+      .get('/protection/csrf')
+      .expect('Content-Type', /json/)
+      .expect(200);
+    const token = csrf_Token.body.token;
+    expect(token).toBeDefined();
+
+    const csrfCookies = csrf_Token.headers['set-cookie'];
+    expect(csrfCookies).toBeDefined();
+
+    let csrfCookie;
+
+    if (Array.isArray(csrfCookies)) {
+      csrfCookie = csrfCookies
+        .map((cookie) => cookie.split('; ')[0])
+        .find((cookie) => cookie.startsWith('csrf-Token='));
+    } else if (typeof csrfCookies === 'string') {
+      csrfCookie = csrfCookies
+        .split('; ')
+        .find((cookie) => cookie.startsWith('csrf-Token='));
+    }
     const imgDIR = path.join(__dirname, './avatar.jpg');
     const data_2 = generateRandomData();
     const body_2 = {
@@ -29,6 +72,8 @@ describe('POST /auth/me', () => {
 
     const res_2 = await request(app)
       .post('/auth/register')
+      .set('x-csrf-token', token)
+      .set('Cookie', csrfCookie)
       .field('email', body_2.email)
       .field('password', body_2.password)
       .field('firstName', body_2.firstName)
@@ -66,6 +111,27 @@ describe('POST /auth/me', () => {
   });
 
   it('Should return 200 and respond with JSON. using Cookie', async () => {
+    const csrf_Token = await request(app)
+      .get('/protection/csrf')
+      .expect('Content-Type', /json/)
+      .expect(200);
+    const token = csrf_Token.body.token;
+    expect(token).toBeDefined();
+
+    const csrfCookies = csrf_Token.headers['set-cookie'];
+    expect(csrfCookies).toBeDefined();
+
+    let csrfCookie;
+
+    if (Array.isArray(csrfCookies)) {
+      csrfCookie = csrfCookies
+        .map((cookie) => cookie.split('; ')[0])
+        .find((cookie) => cookie.startsWith('csrf-Token='));
+    } else if (typeof csrfCookies === 'string') {
+      csrfCookie = csrfCookies
+        .split('; ')
+        .find((cookie) => cookie.startsWith('csrf-Token='));
+    }
     const imgDIR = path.join(__dirname, './avatar.jpg');
     const data_2 = generateRandomData();
     const body_2 = {
@@ -77,6 +143,8 @@ describe('POST /auth/me', () => {
 
     const res_2 = await request(app)
       .post('/auth/register')
+      .set('x-csrf-token', token)
+      .set('Cookie', csrfCookie)
       .field('email', body_2.email)
       .field('password', body_2.password)
       .field('firstName', body_2.firstName)

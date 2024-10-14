@@ -10,16 +10,21 @@ import {
   deleteUser,
 } from '@/api/v1/controllers/auth.controller';
 import upload from '@/config/multerConfig';
+import { csrfProtectionMiddleware } from '@/utils/auth/csrfProtection';
 
 const router = express.Router();
 
-router.post('/register', upload.single('profile'), createUserAccount);
-router.post('/login', loginUserAccount);
-router.post('/logout', logoutUserAccount);
-router.post('/otp-request', reqOtoCODE);
-router.post('/password-reset', passwordReset);
-router.post('/change-name', changeUser_Names);
+router.post(
+  '/register',
+  csrfProtectionMiddleware,
+  upload.single('profile'),
+  createUserAccount
+);
+router.post('/login', csrfProtectionMiddleware, loginUserAccount);
+router.post('/logout', csrfProtectionMiddleware, logoutUserAccount);
+router.post('/otp-request', csrfProtectionMiddleware, reqOtoCODE);
+router.post('/password-reset', csrfProtectionMiddleware, passwordReset);
+router.post('/change-name', csrfProtectionMiddleware, changeUser_Names);
 router.get('/me', getUserInfo);
-router.delete('/delete-me', deleteUser);
-
+router.delete('/delete-me', csrfProtectionMiddleware, deleteUser);
 export default router;
