@@ -3,16 +3,6 @@ import AppError from '@/models/AppErrorModel';
 import redisService from '@/utils/cache/redisCache';
 import Redis from 'ioredis';
 
-// Helper function to handle errors
-const handleError = (error, context) => {
-  if (error instanceof AppError) {
-    throw error;
-  } else if (error instanceof Error) {
-    throw new AppError(context, 500, false, error, true, 'SERVER_ERROR');
-  }
-  throw new Error(`An unexpected error occurred: ${error}`);
-};
-
 // Function to create a refresh record
 const createRefreshRecord = async (
   sessionId,
@@ -37,7 +27,19 @@ const createRefreshRecord = async (
 
     return refreshToken;
   } catch (error) {
-    handleError(error, 'Error creating refresh record');
+    if (error instanceof AppError) {
+      throw error;
+    } else if (error instanceof Error) {
+      throw new AppError(
+        'Error creating refresh record',
+        500,
+        false,
+        error,
+        true,
+        'SERVER_ERROR' // code?: string
+      );
+    }
+    throw new Error(`An unexpected error occurred: ${error}`);
   }
 };
 
@@ -77,7 +79,19 @@ const getRefreshRecord = async (sessionID, redis: Redis | null) => {
 
     return refreshToken.token;
   } catch (error) {
-    handleError(error, 'Error getting refresh record');
+    if (error instanceof AppError) {
+      throw error;
+    } else if (error instanceof Error) {
+      throw new AppError(
+        'Error getting refresh record',
+        500,
+        false,
+        error,
+        true,
+        'SERVER_ERROR' // code?: string
+      );
+    }
+    throw new Error(`An unexpected error occurred: ${error}`);
   }
 };
 

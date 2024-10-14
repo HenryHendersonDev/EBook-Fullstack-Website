@@ -108,7 +108,7 @@ const handleError = async (
       }
     }
     if (APPLICATION_CONFIG.CONSOLE_APP_ERROR) {
-      console.log(JSON.stringify(formattedError, null, 2));
+      console.log(error);
     }
     if (error instanceof AppError) {
       if (!error.isOperational) {

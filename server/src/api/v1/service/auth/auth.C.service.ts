@@ -53,13 +53,6 @@ const userRegisterService = async (user: Register, redis: Redis | null) => {
     const accessToken = await jwtService.sign(userID, redis);
     return accessToken;
   } catch (error) {
-    console.log(
-      '-------------------------------------------------------------'
-    );
-    console.log(error);
-    console.log(
-      '-------------------------------------------------------------'
-    );
     if (error instanceof AppError) {
       throw error;
     } else if (error instanceof Error) {

@@ -92,8 +92,8 @@ const redisClient = async (): Promise<Redis> => {
         'An unexpected error occurred while interacting with the Redis client.',
         500,
         false,
-        undefined,
-        false,
+        error,
+        true,
         'SERVER_ERROR'
       );
     }

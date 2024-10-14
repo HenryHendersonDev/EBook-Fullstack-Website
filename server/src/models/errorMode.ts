@@ -27,7 +27,8 @@ const setErrorDB = async (
         500,
         false,
         error,
-        true
+        true,
+        'SERVER_ERROR'
       );
     }
     throw new Error(`An unexpected error occurred: ${error}`);

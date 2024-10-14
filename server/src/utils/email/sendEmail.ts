@@ -33,7 +33,7 @@ const sendEmail = async (to: string, subject: string, text: string) => {
         500,
         false,
         error,
-        false,
+        true,
         'SERVER_ERROR'
       );
     }
