@@ -60,7 +60,7 @@ const userOTPreqViaToken = async (
     if (!saveUser) return false;
     const emailSend = await sendEmail(
       user.email,
-      'Password Reset Email Verification',
+      'Your Verification Code is Here!',
       template(otp)
     );
     if (!emailSend) {
@@ -70,7 +70,7 @@ const userOTPreqViaToken = async (
         false,
         undefined,
         false,
-        'SYSTEM_ERROR'
+        'SERVER_ERROR'
       );
     }
     return true;
@@ -84,7 +84,7 @@ const userOTPreqViaToken = async (
         false,
         error,
         true,
-        'SYSTEM_ERROR'
+        'SERVER_ERROR'
       );
     }
     throw new Error(`An unexpected error occurred: ${error}`);
@@ -113,7 +113,7 @@ const userOTPreqViaEmail = async (
     if (!saveUser) return false;
     const emailSend = await sendEmail(
       DBuser.email,
-      'Password Reset Email Verification',
+      'Your Verification Code is Here!',
       template(otp)
     );
     if (!emailSend) {
@@ -123,7 +123,7 @@ const userOTPreqViaEmail = async (
         false,
         undefined,
         false,
-        'SYSTEM_ERROR'
+        'SERVER_ERROR'
       );
     }
     return true;
@@ -137,7 +137,7 @@ const userOTPreqViaEmail = async (
         false,
         error,
         true,
-        'SYSTEM_ERROR'
+        'SERVER_ERROR'
       );
     }
     throw new Error(`An unexpected error occurred: ${error}`);
@@ -205,7 +205,7 @@ const PasswordResetToken = async (
         false,
         undefined,
         false,
-        'SYSTEM_ERROR'
+        'SERVER_ERROR'
       );
     }
     const newToken = await jwtService.sign(user.id, redis);
@@ -220,7 +220,7 @@ const PasswordResetToken = async (
         false,
         error,
         true,
-        'SYSTEM_ERROR'
+        'SERVER_ERROR'
       );
     }
     throw new Error(`An unexpected error occurred: ${error}`);
@@ -265,7 +265,7 @@ const PasswordResetEmail = async (
         false,
         undefined,
         false,
-        'SYSTEM_ERROR'
+        'SERVER_ERROR'
       );
     }
     const newToken = await jwtService.sign(DBuser.id, redis);
@@ -280,7 +280,7 @@ const PasswordResetEmail = async (
         false,
         error,
         true,
-        'SYSTEM_ERROR'
+        'SERVER_ERROR'
       );
     }
     throw new Error(`An unexpected error occurred: ${error}`);
@@ -327,7 +327,7 @@ const updateName = async (
           false,
           undefined,
           false,
-          'SYSTEM_ERROR'
+          'SERVER_ERROR'
         );
       }
       return true;
@@ -340,7 +340,7 @@ const updateName = async (
           false,
           undefined,
           false,
-          'SYSTEM_ERROR'
+          'SERVER_ERROR'
         );
       }
       return true;
@@ -357,7 +357,7 @@ const updateName = async (
           false,
           undefined,
           false,
-          'SYSTEM_ERROR'
+          'SERVER_ERROR'
         );
       }
       return true;
@@ -373,7 +373,7 @@ const updateName = async (
         false,
         error,
         true,
-        'SYSTEM_ERROR'
+        'SERVER_ERROR'
       );
     }
     throw new Error(`An unexpected error occurred: ${error}`);

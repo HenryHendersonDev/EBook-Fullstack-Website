@@ -2,7 +2,6 @@ import request from 'supertest';
 import app from '../../src/app';
 import { generateRandomData } from '../utils/userData';
 import path from 'path';
-import { faker } from '@faker-js/faker';
 import { getOtpFromEmail, deleteAllEmails } from '../utils/getOTPfromEmail';
 import prisma from '../../src/config/prismaClientConfig';
 
@@ -222,7 +221,7 @@ describe('POST /auth/password-reset', () => {
     }
 
     const res_3 = await request(app)
-      .post('/auth/password-reset-request')
+      .post('/auth/otp-request')
       .set('Cookie', accessTokenCookie)
       .expect('Content-Type', /json/)
       .expect(200);
@@ -275,7 +274,7 @@ describe('POST /auth/password-reset', () => {
       email: body.email,
     };
     const res_3 = await request(app)
-      .post('/auth/password-reset-request')
+      .post('/auth/otp-request')
       .send(body_3)
       .expect('Content-Type', /json/)
       .expect(200);

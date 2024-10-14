@@ -43,7 +43,7 @@ const userRegisterService = async (user: Register, redis: Redis | null) => {
             false,
             error,
             true,
-            'SYSTEM_ERROR'
+            'SERVER_ERROR'
           );
         }
         throw new Error(`An unexpected error occurred: ${error}`);
@@ -53,6 +53,13 @@ const userRegisterService = async (user: Register, redis: Redis | null) => {
     const accessToken = await jwtService.sign(userID, redis);
     return accessToken;
   } catch (error) {
+    console.log(
+      '-------------------------------------------------------------'
+    );
+    console.log(error);
+    console.log(
+      '-------------------------------------------------------------'
+    );
     if (error instanceof AppError) {
       throw error;
     } else if (error instanceof Error) {
@@ -62,7 +69,7 @@ const userRegisterService = async (user: Register, redis: Redis | null) => {
         false,
         error,
         true,
-        'SYSTEM_ERROR'
+        'SERVER_ERROR'
       );
     }
     throw new Error(`An unexpected error occurred: ${error}`);

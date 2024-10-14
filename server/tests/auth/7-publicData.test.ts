@@ -7,7 +7,7 @@ import prisma from '../../src/config/prismaClientConfig';
 describe('POST /auth/me', () => {
   it('Should Return 401 with Error Code UNAUTHORIZED_INVALID_TOKEN ', async () => {
     const res = await request(app)
-      .post('/auth/me')
+      .get('/auth/me')
       .set(
         'Cookie',
         'accessToken=s%3AeyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImY0MTFjYzAwLTU4NGUtNDgwYy1hNzIxLWZhNzI2ZjJhNTk4MCIsImlhdCI6MTcyODgwODAwMiwiZXhwIjoxNzI4ODA4MDYyfQ.vGvUaxRfXypDyEa-z14_r42VxtDVHxuahUy7eHrAZfq2xiFOU0kXXTbbKIHFgbwspJ8-5gtFkaBFAC4XghBcrg.S0WNnyCk%2Fu0TBVrZJV7gquLLDOgWQmtl16Xy%2FG7jYVg'
@@ -58,7 +58,7 @@ describe('POST /auth/me', () => {
     await new Promise((resolve) => setTimeout(resolve, 2500));
 
     const res = await request(app)
-      .post('/auth/me')
+      .get('/auth/me')
       .set('Cookie', accessTokenCookie)
       .expect('Content-Type', /json/)
       .expect(404);
@@ -102,7 +102,7 @@ describe('POST /auth/me', () => {
         .find((cookie) => cookie.startsWith('accessToken='));
     }
     const res = await request(app)
-      .post('/auth/me')
+      .get('/auth/me')
       .set('Cookie', accessTokenCookie)
       .expect('Content-Type', /json/)
       .expect(200);

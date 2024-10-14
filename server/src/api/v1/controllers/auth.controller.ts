@@ -6,6 +6,7 @@ import {
   passwordResetSchemaToken,
   passwordResetSchema,
   NameChange,
+  delUserSchema,
 } from '@/api/v1/validators/index.Validation';
 import AppError from '@/models/AppErrorModel';
 import userRegisterService from '../service/auth/auth.C.service';
@@ -13,7 +14,10 @@ import {
   getUserDataService,
   userLoginService,
 } from '../service/auth/auth.R.service';
-import userLogoutService from '../service/auth/auth.D.service';
+import {
+  userDeleteService,
+  userLogoutService,
+} from '../service/auth/auth.D.service';
 import {
   PasswordResetEmail,
   PasswordResetToken,
@@ -153,12 +157,8 @@ const logoutUserAccount = async (
   }
 };
 
-// This controller For Sending Password Reset OTP code to user email Address.
-const reqPassResetOTPUserAccount = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+// This controller For Sending  OTP code to user email Address.
+const reqOtoCODE = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { accessToken } = req.signedCookies;
     if (accessToken) {
@@ -170,11 +170,11 @@ const reqPassResetOTPUserAccount = async (
           false,
           undefined,
           false,
-          'SYSTEM_ERROR'
+          'SERVER_ERROR'
         );
       }
       res.status(200).json({
-        message: 'User has been Send the OTP code to user Email',
+        message: 'The OTP code successfully Sent To User Email Address',
         code: 'SUCCESSFULLY_SENT_OTP',
       });
     } else {
@@ -198,11 +198,11 @@ const reqPassResetOTPUserAccount = async (
           false,
           undefined,
           false,
-          'SYSTEM_ERROR'
+          'SERVER_ERROR'
         );
       }
       res.status(200).json({
-        message: 'User has been Send the OTP code to user Email',
+        message: 'The OTP code successfully Sent To User Email Address',
         code: 'SUCCESSFULLY_SENT_OTP',
       });
     }
@@ -244,7 +244,7 @@ const passwordReset = async (
           false,
           undefined,
           false,
-          'SYSTEM_ERROR'
+          'SERVER_ERROR'
         );
       }
       res
@@ -286,7 +286,7 @@ const passwordReset = async (
           false,
           undefined,
           false,
-          'SYSTEM_ERROR'
+          'SERVER_ERROR'
         );
       }
       res
@@ -351,7 +351,7 @@ const changeUser_Names = async (
         false,
         undefined,
         false,
-        'SYSTEM_ERROR'
+        'SERVER_ERROR'
       );
     }
     res.status(200).json({
@@ -388,12 +388,58 @@ const getUserInfo = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
+// This Controller for Getting user Public Data
+const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { accessToken } = req.signedCookies;
+    const { error } = delUserSchema.validate(req.body);
+    if (!accessToken) {
+      throw new AppError(
+        'You are not logged in',
+        401,
+        true,
+        undefined,
+        false,
+        'NOT_LOGGED_IN'
+      );
+    }
+    if (error) {
+      throw new AppError(
+        error.details[0].message,
+        400,
+        true,
+        undefined,
+        false,
+        'SCHEMA_VALIDATE_ERROR'
+      );
+    }
+    await userDeleteService(accessToken, req.body.otp, req.redis);
+    res
+      .cookie('accessToken', '', {
+        httpOnly: true,
+        secure: process.env['NODE_ENV'] === 'production',
+        sameSite: 'strict',
+        signed: true,
+        expires: new Date(0),
+        path: '/',
+      })
+      .status(200)
+      .json({
+        message: 'User has been successfully Deleted.',
+        code: 'SUCCESSFULLY_DELETED_USER',
+      });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 export {
   createUserAccount,
   loginUserAccount,
   logoutUserAccount,
-  reqPassResetOTPUserAccount,
+  reqOtoCODE,
   passwordReset,
   changeUser_Names,
   getUserInfo,
+  deleteUser,
 };

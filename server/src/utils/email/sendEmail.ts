@@ -25,9 +25,6 @@ const sendEmail = async (to: string, subject: string, text: string) => {
     }
     return true;
   } catch (error) {
-    console.log('--------------------------------------------------------');
-    console.log(error);
-    console.log('--------------------------------------------------------');
     if (error instanceof AppError) {
       throw error;
     } else if (error instanceof Error) {
@@ -37,7 +34,7 @@ const sendEmail = async (to: string, subject: string, text: string) => {
         false,
         error,
         false,
-        'SYSTEM_ERROR'
+        'SERVER_ERROR'
       );
     }
     throw new Error(`An unexpected error occurred: ${error}`);

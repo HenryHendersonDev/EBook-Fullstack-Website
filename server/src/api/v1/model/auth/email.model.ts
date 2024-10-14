@@ -24,7 +24,7 @@ const saveOTPonDB = async (
         false,
         undefined,
         false,
-        'SYSTEM_ERROR'
+        'SERVER_ERROR'
       );
     }
     await redisService.set(newOTP.otp, newOTP.userId, redis, 60 * 5, 'otp');
@@ -50,7 +50,7 @@ const saveOTPonDB = async (
         false,
         error,
         true,
-        'SYSTEM_ERROR'
+        'SERVER_ERROR'
       );
     }
     throw new Error(`An unexpected error occurred: ${error}`);

@@ -2,10 +2,10 @@ import request from 'supertest';
 import app from '../../src/app';
 import { generateRandomData, FixedData } from '../utils/userData';
 
-describe('POST /auth/password-reset-request', () => {
+describe('POST /auth/otp-request', () => {
   it('Should Return 401 with Error Code UNAUTHORIZED_INVALID_TOKEN ', async () => {
     const res = await request(app)
-      .post('/auth/password-reset-request')
+      .post('/auth/otp-request')
       .set(
         'Cookie',
         'accessToken=s%3AeyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImY0MTFjYzAwLTU4NGUtNDgwYy1hNzIxLWZhNzI2ZjJhNTk4MCIsImlhdCI6MTcyODgwODAwMiwiZXhwIjoxNzI4ODA4MDYyfQ.vGvUaxRfXypDyEa-z14_r42VxtDVHxuahUy7eHrAZfq2xiFOU0kXXTbbKIHFgbwspJ8-5gtFkaBFAC4XghBcrg.S0WNnyCk%2Fu0TBVrZJV7gquLLDOgWQmtl16Xy%2FG7jYVg'
@@ -19,7 +19,7 @@ describe('POST /auth/password-reset-request', () => {
       email: 'test@test.com',
     };
     const res = await request(app)
-      .post('/auth/password-reset-request')
+      .post('/auth/otp-request')
       .send(body)
       .expect('Content-Type', /json/)
       .expect(404);
@@ -31,7 +31,7 @@ describe('POST /auth/password-reset-request', () => {
       email: FixedData.email,
     };
     const res = await request(app)
-      .post('/auth/password-reset-request')
+      .post('/auth/otp-request')
       .send(body)
       .expect('Content-Type', /json/)
       .expect(200);
@@ -70,7 +70,7 @@ describe('POST /auth/password-reset-request', () => {
     }
 
     const res = await request(app)
-      .post('/auth/password-reset-request')
+      .post('/auth/otp-request')
       .set('Cookie', accessTokenCookie)
       .expect('Content-Type', /json/)
       .expect(200);

@@ -37,15 +37,7 @@ const getOtpFromEmail = async () => {
     const latestEmail = messages[0];
 
     const emailBody = latestEmail.Content.Body;
-
-    const extractOTP = (input) => {
-      const regex = /<div\s+class=3D["']otp["']>(\d+)<\/div>/;
-      const match = input.match(regex);
-      return match ? match[1] : null;
-    };
-
-    const otpCode = extractOTP(emailBody);
-    return otpCode;
+    return emailBody;
   } catch (error) {
     console.error('Error fetching emails from MailHog:', error);
     return null;

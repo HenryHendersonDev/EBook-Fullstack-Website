@@ -49,7 +49,7 @@ const saveNewUserOnDB = async (user: Register): Promise<string> => {
         false,
         error,
         true,
-        'SYSTEM_ERROR'
+        'SERVER_ERROR'
       );
     }
     throw new Error(`An unexpected error occurred: ${error}`);
@@ -75,7 +75,7 @@ const findUserOnDB = async (email: string): Promise<User | null> => {
         false,
         error,
         true,
-        'SYSTEM_ERROR'
+        'SERVER_ERROR'
       );
     }
     throw new Error(`An unexpected error occurred: ${error}`);
@@ -106,7 +106,7 @@ const deleteSession = async (
         false,
         error,
         true,
-        'SYSTEM_ERROR'
+        'SERVER_ERROR'
       );
     }
     throw new Error(`An unexpected error occurred: ${error}`);
@@ -144,7 +144,7 @@ const findUserOnDBviaSessionID = async (
         false,
         error,
         true,
-        'SYSTEM_ERROR'
+        'SERVER_ERROR'
       );
     }
     throw new Error(`An unexpected error occurred: ${error}`);
@@ -170,7 +170,7 @@ const findUserOnDBViaID = async (id: string): Promise<User | null> => {
         false,
         error,
         true,
-        'SYSTEM_ERROR'
+        'SERVER_ERROR'
       );
     }
     throw new Error(`An unexpected error occurred: ${error}`);
@@ -210,7 +210,7 @@ const findUserOnDBViaIdPUBLIC_DATA = async (
         false,
         error,
         true,
-        'SYSTEM_ERROR'
+        'SERVER_ERROR'
       );
     }
     throw new Error(`An unexpected error occurred: ${error}`);
@@ -277,7 +277,7 @@ const setNewPassword = async (
         false,
         error,
         true,
-        'SYSTEM_ERROR'
+        'SERVER_ERROR'
       );
     }
     throw new Error(`An unexpected error occurred: ${error}`);
@@ -285,17 +285,17 @@ const setNewPassword = async (
 };
 
 const findOTPCode = async (
-  id: string,
+  userId: string,
   otp: string,
   redis: Redis | null
 ): Promise<boolean | null> => {
   try {
     if (!prisma) throw new Error('Prisma client is not initialized');
     const otpCode = await redisService.get(otp, redis);
-    if (otpCode && otpCode === id) return true;
+    if (otpCode && otpCode === userId) return true;
     const otpPrisma = await prisma.oTP.findUnique({
       where: {
-        userId: id,
+        userId,
         otp,
       },
     });
@@ -311,7 +311,7 @@ const findOTPCode = async (
         false,
         error,
         true,
-        'SYSTEM_ERROR'
+        'SERVER_ERROR'
       );
     }
     throw new Error(`An unexpected error occurred: ${error}`);
@@ -355,7 +355,7 @@ const UpdateUserFirstName = async (
         false,
         error,
         true,
-        'SYSTEM_ERROR'
+        'SERVER_ERROR'
       );
     }
     throw new Error(`An unexpected error occurred: ${error}`);
@@ -398,7 +398,7 @@ const UpdateUserLastName = async (
         false,
         error,
         true,
-        'SYSTEM_ERROR'
+        'SERVER_ERROR'
       );
     }
     throw new Error(`An unexpected error occurred: ${error}`);
@@ -443,7 +443,49 @@ const UpdateUserFullName = async (
         false,
         error,
         true,
-        'SYSTEM_ERROR'
+        'SERVER_ERROR'
+      );
+    }
+    throw new Error(`An unexpected error occurred: ${error}`);
+  }
+};
+
+const deleteUser = async (
+  userId: string,
+  redis: Redis | null
+): Promise<boolean | null> => {
+  try {
+    if (!prisma) throw new Error('Prisma client is not initialized');
+    const allSessions = await prisma.sessions.findMany({
+      where: {
+        userId,
+      },
+    });
+    allSessions.forEach(async (session) => {
+      await redisService.delete(session.id, redis);
+    });
+    await prisma.sessions.deleteMany({
+      where: {
+        userId,
+      },
+    });
+    await prisma.user.delete({
+      where: {
+        id: userId,
+      },
+    });
+    return true;
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw error;
+    } else if (error instanceof Error) {
+      throw new AppError(
+        'Something went Wrong While Deleting',
+        500,
+        false,
+        error,
+        true,
+        'SERVER_ERROR'
       );
     }
     throw new Error(`An unexpected error occurred: ${error}`);
@@ -462,4 +504,5 @@ export {
   UpdateUserLastName,
   UpdateUserFullName,
   findUserOnDBViaIdPUBLIC_DATA,
+  deleteUser,
 };

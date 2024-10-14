@@ -32,6 +32,9 @@ export const NameChange = Joi.object({
   firstName: Joi.string().min(1),
   lastName: Joi.string().min(1),
 }).or('firstName', 'lastName');
+export const delUserSchema = Joi.object({
+  otp: Joi.string().length(6).required(),
+});
 
 // 2. 📚 **Product Catalog**
 export const createProductSchema = Joi.object({

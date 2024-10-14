@@ -56,7 +56,7 @@ const userLoginService = async (
         false,
         error,
         true,
-        'SYSTEM_ERROR'
+        'SERVER_ERROR'
       );
     }
     throw new Error(`An unexpected error occurred: ${error}`);
@@ -119,7 +119,7 @@ const getUserDataService = async (
         false,
         error,
         true,
-        'SYSTEM_ERROR'
+        'SERVER_ERROR'
       );
     }
     throw new Error(`An unexpected error occurred: ${error}`);
