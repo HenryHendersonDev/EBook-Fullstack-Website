@@ -70,7 +70,7 @@ const findUserOnDB = async (email: string): Promise<User | null> => {
       throw error;
     } else if (error instanceof Error) {
       throw new AppError(
-        'Something went Wrong While Saving New User',
+        'Something went Wrong While Finding',
         500,
         false,
         error,
@@ -101,7 +101,7 @@ const deleteSession = async (
       throw error;
     } else if (error instanceof Error) {
       throw new AppError(
-        'Something went Wrong While Saving New User',
+        'Something went Wrong While Deleting',
         500,
         false,
         error,
@@ -139,7 +139,7 @@ const findUserOnDBviaSessionID = async (
       throw error;
     } else if (error instanceof Error) {
       throw new AppError(
-        'Something went Wrong While Saving New User',
+        'Something went Wrong While Finding New Using Using Sesion ID',
         500,
         false,
         error,
@@ -165,7 +165,47 @@ const findUserOnDBViaID = async (id: string): Promise<User | null> => {
       throw error;
     } else if (error instanceof Error) {
       throw new AppError(
-        'Something went Wrong While Saving New User',
+        'Something went Wrong While Finding user Using UserID',
+        500,
+        false,
+        error,
+        true,
+        'SYSTEM_ERROR'
+      );
+    }
+    throw new Error(`An unexpected error occurred: ${error}`);
+  }
+};
+
+interface PublicDATA {
+  email: string;
+  firstName: string;
+  lastName: string | null;
+}
+
+const findUserOnDBViaIdPUBLIC_DATA = async (
+  id: string
+): Promise<PublicDATA | null> => {
+  try {
+    if (!prisma) throw new Error('Prisma client is not initialized');
+    const isUser = await prisma.user.findUnique({
+      where: {
+        id,
+      },
+      select: {
+        firstName: true,
+        lastName: true,
+        email: true,
+      },
+    });
+
+    return isUser;
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw error;
+    } else if (error instanceof Error) {
+      throw new AppError(
+        'Something went Wrong While Finding User PUBLIC Data',
         500,
         false,
         error,
@@ -232,7 +272,7 @@ const setNewPassword = async (
       throw error;
     } else if (error instanceof Error) {
       throw new AppError(
-        'Something went Wrong While Saving New User',
+        'Something went Wrong While Setting user new Password',
         500,
         false,
         error,
@@ -266,7 +306,7 @@ const findOTPCode = async (
       throw error;
     } else if (error instanceof Error) {
       throw new AppError(
-        'Something went Wrong While Saving New User',
+        'Something went Wrong While Finding OTP CODE',
         500,
         false,
         error,
@@ -310,7 +350,7 @@ const UpdateUserFirstName = async (
       throw error;
     } else if (error instanceof Error) {
       throw new AppError(
-        'Something went Wrong While Saving New User',
+        'Something went Wrong While Updating User First name',
         500,
         false,
         error,
@@ -353,7 +393,7 @@ const UpdateUserLastName = async (
       throw error;
     } else if (error instanceof Error) {
       throw new AppError(
-        'Something went Wrong While Saving New User',
+        'Something went Wrong While Updating User Last name',
         500,
         false,
         error,
@@ -398,7 +438,7 @@ const UpdateUserFullName = async (
       throw error;
     } else if (error instanceof Error) {
       throw new AppError(
-        'Something went Wrong While Saving New User',
+        'Something went Wrong While Updating User Both First and last Names',
         500,
         false,
         error,
@@ -421,4 +461,5 @@ export {
   UpdateUserFirstName,
   UpdateUserLastName,
   UpdateUserFullName,
+  findUserOnDBViaIdPUBLIC_DATA,
 };

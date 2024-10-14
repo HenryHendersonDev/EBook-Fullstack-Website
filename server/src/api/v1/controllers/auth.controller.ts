@@ -9,7 +9,10 @@ import {
 } from '@/api/v1/validators/index.Validation';
 import AppError from '@/models/AppErrorModel';
 import userRegisterService from '../service/auth/auth.C.service';
-import userLoginService from '../service/auth/auth.R.service';
+import {
+  getUserDataService,
+  userLoginService,
+} from '../service/auth/auth.R.service';
 import userLogoutService from '../service/auth/auth.D.service';
 import {
   PasswordResetEmail,
@@ -360,6 +363,31 @@ const changeUser_Names = async (
   }
 };
 
+// This Controller for Getting user Public Data
+const getUserInfo = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { accessToken } = req.signedCookies;
+    if (!accessToken) {
+      throw new AppError(
+        'You are not logged in',
+        401,
+        true,
+        undefined,
+        false,
+        'NOT_LOGGED_IN'
+      );
+    }
+    const userDATA = await getUserDataService(accessToken, req.redis);
+    res.status(200).json({
+      message: 'User has been successfully Get user Data.',
+      code: 'SUCCESSFULLY_GET_USER_DATA',
+      data: userDATA,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 export {
   createUserAccount,
   loginUserAccount,
@@ -367,4 +395,5 @@ export {
   reqPassResetOTPUserAccount,
   passwordReset,
   changeUser_Names,
+  getUserInfo,
 };

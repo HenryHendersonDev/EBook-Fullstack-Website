@@ -79,7 +79,7 @@ const userOTPreqViaToken = async (
       throw error;
     } else if (error instanceof Error) {
       throw new AppError(
-        'Something Went Wrong While Registering user',
+        'Something Went Wrong While Requesting user OTP Code Using the Access Token',
         500,
         false,
         error,
@@ -132,7 +132,7 @@ const userOTPreqViaEmail = async (
       throw error;
     } else if (error instanceof Error) {
       throw new AppError(
-        'Something Went Wrong While Registering user',
+        'Something Went Wrong While Requesting user OTP Code Using the Email',
         500,
         false,
         error,
@@ -215,7 +215,7 @@ const PasswordResetToken = async (
       throw error;
     } else if (error instanceof Error) {
       throw new AppError(
-        'Something Went Wrong While Registering user',
+        'Something Went Wrong While Resetting User password Using Token',
         500,
         false,
         error,
@@ -275,7 +275,7 @@ const PasswordResetEmail = async (
       throw error;
     } else if (error instanceof Error) {
       throw new AppError(
-        'Something Went Wrong While Registering user',
+        'Something Went Wrong While Resetting User password Using Email',
         500,
         false,
         error,
@@ -368,7 +368,7 @@ const updateName = async (
       throw error;
     } else if (error instanceof Error) {
       throw new AppError(
-        'Something Went Wrong While Registering user',
+        'Something Went Wrong While Updating user names',
         500,
         false,
         error,

@@ -45,7 +45,7 @@ const saveOTPonDB = async (
       throw error;
     } else if (error instanceof Error) {
       throw new AppError(
-        'Something went Wrong While Saving New User',
+        'Something went Wrong While Saving The OTP code on The Database',
         500,
         false,
         error,

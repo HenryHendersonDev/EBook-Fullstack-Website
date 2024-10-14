@@ -27,7 +27,7 @@ const userLogoutService = async (
       throw error;
     } else if (error instanceof Error) {
       throw new AppError(
-        'Something Went Wrong While Registering user',
+        'Something Went Wrong While Logging OUT user',
         500,
         false,
         error,
