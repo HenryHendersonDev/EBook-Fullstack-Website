@@ -1,13 +1,9 @@
 import AppError from '@/models/AppErrorModel';
 import Redis from 'ioredis';
-import {
-  deleteSession,
-  deleteUser,
-  findOTPCode,
-  findUserOnDB,
-  findUserOnDBviaSessionID,
-} from '../../model/auth/auth.model';
 import jwtService from '@/utils/auth/jwt';
+import { deleteSession, deleteUser } from '../../model/auth/auth.D.model';
+import { findUserOnDBviaSessionID } from '../../model/auth/auth.R.model';
+import { findOTPCode } from '../../model/auth/auth.otp.model';
 
 // in this service we will get user Cookie and Remove session stored on to that access token then remove cookie from user browser.
 const userLogoutService = async (

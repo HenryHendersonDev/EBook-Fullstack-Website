@@ -1,12 +1,12 @@
 import AppError from '@/models/AppErrorModel';
 import Redis from 'ioredis';
+import jwtService from '@/utils/auth/jwt';
+import passwordService from '@/utils/auth/bcrypt';
 import {
   findUserOnDB,
   findUserOnDBViaIdPUBLIC_DATA,
   findUserOnDBviaSessionID,
-} from '../../model/auth/auth.model';
-import jwtService from '@/utils/auth/jwt';
-import passwordService from '@/utils/auth/bcrypt';
+} from '../../model/auth/auth.R.model';
 
 interface Login {
   email: string;

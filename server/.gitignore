@@ -8,3 +8,4 @@ prisma/migrations
 logs
 coverage
 src/local.ts
+temp

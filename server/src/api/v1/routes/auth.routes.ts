@@ -1,16 +1,20 @@
 import express from 'express';
-import {
-  createUserAccount,
-  loginUserAccount,
-  logoutUserAccount,
-  reqOtoCODE,
-  passwordReset,
-  changeUser_Names,
-  getUserInfo,
-  deleteUser,
-} from '@/api/v1/controllers/auth.controller';
 import upload from '@/config/multerConfig';
 import { csrfProtectionMiddleware } from '@/utils/auth/csrfProtection';
+import {
+  getUserInfo,
+  loginUserAccount,
+} from '../controllers/auth/auth.R.controller';
+import {
+  deleteUser,
+  logoutUserAccount,
+} from '../controllers/auth/auth.D.controller';
+import { reqOtoCODE } from '../controllers/auth/auth.otp.controller';
+import {
+  changeUser_Names,
+  passwordReset,
+} from '../controllers/auth/auth.U.controller';
+import { createUserAccount } from '../controllers/auth/auth.C.controller';
 
 const router = express.Router();
 

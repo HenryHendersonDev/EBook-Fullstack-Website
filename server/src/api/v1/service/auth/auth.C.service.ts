@@ -1,9 +1,9 @@
 import AppError from '@/models/AppErrorModel';
 import Redis from 'ioredis';
-import { saveNewUserOnDB } from '../../model/auth/auth.model';
 import jwtService from '@/utils/auth/jwt';
 import { handleUpload, handleDelete } from '@/config/cloudinaryConfig';
 import passwordService from '@/utils/auth/bcrypt';
+import { saveNewUserOnDB } from '../../model/auth/auth.C.model';
 
 interface Register {
   email: string;
