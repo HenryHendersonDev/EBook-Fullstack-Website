@@ -15,7 +15,7 @@ const jestConfig: Config = {
   testPathIgnorePatterns: ['/node_modules/'],
   testEnvironment: 'node',
   testTimeout: 180000,
-  testSequencer: './tests/testSequencer.js',
+  testSequencer: './tests/testSequencer.ts',
 };
 
 export default jestConfig;

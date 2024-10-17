@@ -3,8 +3,8 @@ import { faker } from '@faker-js/faker';
 export const generateRandomData = () => ({
   email: faker.internet.email(),
   password: faker.internet.password(),
-  firstName: faker.name.firstName(),
-  lastName: faker.name.lastName(),
+  firstName: faker.person.firstName(),
+  lastName: faker.person.lastName(),
   otp: faker.number.int({ min: 100000, max: 999999 }).toString(),
 });
 

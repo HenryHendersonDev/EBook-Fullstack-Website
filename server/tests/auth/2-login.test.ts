@@ -3,30 +3,11 @@ import app from '../../src/app';
 import fs from 'fs';
 import path from 'path';
 import { FixedData, generateRandomData } from '../utils/userData';
+import { getCsrfTokenAndCookie } from '../utils/csrfToken';
 
 describe('POST /auth/login', () => {
   it('Should return 200, set the Access Token cookie, and respond with JSON.', async () => {
-    const csrf_Token = await request(app)
-      .get('/protection/csrf')
-      .expect('Content-Type', /json/)
-      .expect(200);
-    const token = csrf_Token.body.token;
-    expect(token).toBeDefined();
-
-    const csrfCookies = csrf_Token.headers['set-cookie'];
-    expect(csrfCookies).toBeDefined();
-
-    let csrfCookie;
-
-    if (Array.isArray(csrfCookies)) {
-      csrfCookie = csrfCookies
-        .map((cookie) => cookie.split('; ')[0])
-        .find((cookie) => cookie.startsWith('csrf-Token='));
-    } else if (typeof csrfCookies === 'string') {
-      csrfCookie = csrfCookies
-        .split('; ')
-        .find((cookie) => cookie.startsWith('csrf-Token='));
-    }
+    const csrfData = await getCsrfTokenAndCookie();
 
     const body = {
       email: FixedData.email,
@@ -35,8 +16,8 @@ describe('POST /auth/login', () => {
 
     const res = await request(app)
       .post('/auth/login')
-      .set('x-csrf-token', token)
-      .set('Cookie', csrfCookie)
+      .set('x-csrf-token', csrfData.token)
+      .set('Cookie', csrfData.csrfCookie)
       .send(body)
       .expect('Content-Type', /json/)
       .expect(200);
@@ -72,27 +53,7 @@ describe('POST /auth/login', () => {
   });
 
   it('Should Return 404 with Error Code USER_NOT_FOUND ', async () => {
-    const csrf_Token = await request(app)
-      .get('/protection/csrf')
-      .expect('Content-Type', /json/)
-      .expect(200);
-    const token = csrf_Token.body.token;
-    expect(token).toBeDefined();
-
-    const csrfCookies = csrf_Token.headers['set-cookie'];
-    expect(csrfCookies).toBeDefined();
-
-    let csrfCookie;
-
-    if (Array.isArray(csrfCookies)) {
-      csrfCookie = csrfCookies
-        .map((cookie) => cookie.split('; ')[0])
-        .find((cookie) => cookie.startsWith('csrf-Token='));
-    } else if (typeof csrfCookies === 'string') {
-      csrfCookie = csrfCookies
-        .split('; ')
-        .find((cookie) => cookie.startsWith('csrf-Token='));
-    }
+    const csrfData = await getCsrfTokenAndCookie();
     const data = generateRandomData();
     const body = {
       email: data.email,
@@ -101,8 +62,8 @@ describe('POST /auth/login', () => {
 
     const res = await request(app)
       .post('/auth/login')
-      .set('x-csrf-token', token)
-      .set('Cookie', csrfCookie)
+      .set('x-csrf-token', csrfData.token)
+      .set('Cookie', csrfData.csrfCookie)
       .send(body)
       .expect('Content-Type', /json/)
       .expect(404);
@@ -111,27 +72,7 @@ describe('POST /auth/login', () => {
   });
 
   it('Should Return 400 with Error Code INVALID_PASSWORD ', async () => {
-    const csrf_Token = await request(app)
-      .get('/protection/csrf')
-      .expect('Content-Type', /json/)
-      .expect(200);
-    const token = csrf_Token.body.token;
-    expect(token).toBeDefined();
-
-    const csrfCookies = csrf_Token.headers['set-cookie'];
-    expect(csrfCookies).toBeDefined();
-
-    let csrfCookie;
-
-    if (Array.isArray(csrfCookies)) {
-      csrfCookie = csrfCookies
-        .map((cookie) => cookie.split('; ')[0])
-        .find((cookie) => cookie.startsWith('csrf-Token='));
-    } else if (typeof csrfCookies === 'string') {
-      csrfCookie = csrfCookies
-        .split('; ')
-        .find((cookie) => cookie.startsWith('csrf-Token='));
-    }
+    const csrfData = await getCsrfTokenAndCookie();
     const data = generateRandomData();
     const body = {
       email: FixedData.email,
@@ -140,8 +81,8 @@ describe('POST /auth/login', () => {
 
     const res = await request(app)
       .post('/auth/login')
-      .set('x-csrf-token', token)
-      .set('Cookie', csrfCookie)
+      .set('x-csrf-token', csrfData.token)
+      .set('Cookie', csrfData.csrfCookie)
       .send(body)
       .expect('Content-Type', /json/)
       .expect(400);

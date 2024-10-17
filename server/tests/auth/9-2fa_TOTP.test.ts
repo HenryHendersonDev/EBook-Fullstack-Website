@@ -1,12 +1,12 @@
+import { cleanDB } from './../utils/cleanDBUtils';
+import { createDynamicUser } from './../utils/createNewUser';
+import { getCsrfTokenAndCookie } from './../utils/csrfToken';
 import request from 'supertest';
 import app from '../../src/app';
-import path from 'path';
-import { generateRandomData } from '../utils/userData';
-import exp from 'constants';
 import generateToken from '../utils/2faGen';
 import { getOtpFromEmail } from '../utils/getOTPfromEmail';
 
-describe('POST /auth/generate-2fa', () => {
+describe('POST /auth/generate-Totp', () => {
   let userCookie;
   let userEmail;
   let userPassword;
@@ -19,77 +19,22 @@ describe('POST /auth/generate-2fa', () => {
   let newUserPassword;
 
   it('Should return 401, With error Code UNAUTHORIZED_INVALID_OR_EXPIRED_TOKEN', async () => {
-    const csrf_Token = await request(app)
-      .get('/protection/csrf')
-      .expect('Content-Type', /json/)
-      .expect(200);
-    const token = csrf_Token.body.token;
-    expect(token).toBeDefined();
-
-    const csrfCookies = csrf_Token.headers['set-cookie'];
-    expect(csrfCookies).toBeDefined();
-
-    let csrfCookie;
-
-    if (Array.isArray(csrfCookies)) {
-      csrfCookie = csrfCookies
-        .map((cookie) => cookie.split('; ')[0])
-        .find((cookie) => cookie.startsWith('csrf-Token='));
-    } else if (typeof csrfCookies === 'string') {
-      csrfCookie = csrfCookies
-        .split('; ')
-        .find((cookie) => cookie.startsWith('csrf-Token='));
-    }
-
-    const imgDIR = path.join(__dirname, './avatar.jpg');
-    const data = generateRandomData();
-    const body_Create = {
-      email: data.email,
-      password: data.password,
-      firstName: data.firstName,
-      lastName: data.lastName,
-    };
-
-    const res_create = await request(app)
-      .post('/auth/register')
-      .set('x-csrf-token', token)
-      .set('Cookie', csrfCookie)
-      .field('email', body_Create.email)
-      .field('password', body_Create.password)
-      .field('firstName', body_Create.firstName)
-      .field('lastName', body_Create.lastName)
-      .attach('profile', imgDIR)
-      .expect('Content-Type', /json/)
-      .expect(201);
-
-    expect(res_create.body.code).toBe('SUCCESSFULLY_CREATED');
-
-    const cookies = res_create.headers['set-cookie'];
-    expect(cookies).toBeDefined();
-
-    let accessTokenCookie;
-
-    if (Array.isArray(cookies)) {
-      accessTokenCookie = cookies
-        .map((cookie) => cookie.split('; ')[0])
-        .find((cookie) => cookie.startsWith('accessToken='));
-    } else if (typeof cookies === 'string') {
-      accessTokenCookie = cookies
-        .split('; ')
-        .find((cookie) => cookie.startsWith('accessToken='));
-    }
-    userCookie = accessTokenCookie;
-    userEmail = body_Create.email;
-    userPassword = body_Create.password;
-    csrfCookieData = csrfCookie;
-    csrfToken = token;
+    await cleanDB();
+    await new Promise((resolve) => setTimeout(resolve, 2500));
+    const csrfData = await getCsrfTokenAndCookie();
+    const user = await createDynamicUser(csrfData.token, csrfData.csrfCookie);
+    userCookie = user.accessTokenCookie;
+    userEmail = user.email;
+    userPassword = user.password;
+    csrfCookieData = csrfData.csrfCookie;
+    csrfToken = csrfData.token;
 
     const res = await request(app)
-      .post('/auth/generate-2fa')
-      .set('x-csrf-token', token)
+      .post('/auth/generate-Totp')
+      .set('x-csrf-token', csrfData.token)
       .set('Cookie', [
         'accessToken=s%3AeyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImY0MTFjYzAwLTU4NGUtNDgwYy1hNzIxLWZhNzI2ZjJhNTk4MCIsImlhdCI6MTcyODgwODAwMiwiZXhwIjoxNzI4ODA4MDYyfQ.vGvUaxRfXypDyEa-z14_r42VxtDVHxuahUy7eHrAZfq2xiFOU0kXXTbbKIHFgbwspJ8-5gtFkaBFAC4XghBcrg.S0WNnyCk%2Fu0TBVrZJV7gquLLDOgWQmtl16Xy%2FG7jYVg',
-        csrfCookie,
+        csrfData.csrfCookie,
       ])
       .expect('Content-Type', /json/)
       .expect(401);
@@ -98,7 +43,7 @@ describe('POST /auth/generate-2fa', () => {
 
   it('Should return 401, With error Code NOT_LOGGED_IN', async () => {
     const res = await request(app)
-      .post('/auth/generate-2fa')
+      .post('/auth/generate-Totp')
       .set('x-csrf-token', csrfToken)
       .set('Cookie', csrfCookieData)
       .expect('Content-Type', /json/)
@@ -107,7 +52,7 @@ describe('POST /auth/generate-2fa', () => {
   });
   it('Should return 200, With error Code SUCCESSFULLY_CREATED_TOTP', async () => {
     const res = await request(app)
-      .post('/auth/generate-2fa')
+      .post('/auth/generate-Totp')
       .set('x-csrf-token', csrfToken)
       .set('Cookie', [userCookie, csrfCookieData])
       .expect('Content-Type', /json/)
@@ -118,7 +63,7 @@ describe('POST /auth/generate-2fa', () => {
   });
   it('Should return 400, With error Code SCHEMA_VALIDATE_ERROR', async () => {
     const res = await request(app)
-      .post('/auth/verify-2fa')
+      .post('/auth/verify-Totp')
       .set('x-csrf-token', csrfToken)
       .set('Cookie', [userCookie, csrfCookieData])
       .expect('Content-Type', /json/)
@@ -126,84 +71,29 @@ describe('POST /auth/generate-2fa', () => {
     expect(res.body.code).toBe('SCHEMA_VALIDATE_ERROR');
   });
   it('Should return 400, With error Code TOTP_NOT_ENABLED', async () => {
-    const csrf_Token = await request(app)
-      .get('/protection/csrf')
-      .expect('Content-Type', /json/)
-      .expect(200);
-    const token = csrf_Token.body.token;
-    expect(token).toBeDefined();
+    const csrfData = await getCsrfTokenAndCookie();
+    const user = await createDynamicUser(csrfData.token, csrfData.csrfCookie);
 
-    const csrfCookies = csrf_Token.headers['set-cookie'];
-    expect(csrfCookies).toBeDefined();
-
-    let csrfCookie;
-
-    if (Array.isArray(csrfCookies)) {
-      csrfCookie = csrfCookies
-        .map((cookie) => cookie.split('; ')[0])
-        .find((cookie) => cookie.startsWith('csrf-Token='));
-    } else if (typeof csrfCookies === 'string') {
-      csrfCookie = csrfCookies
-        .split('; ')
-        .find((cookie) => cookie.startsWith('csrf-Token='));
-    }
-
-    const imgDIR = path.join(__dirname, './avatar.jpg');
-    const data = generateRandomData();
-    const body_Create = {
-      email: data.email,
-      password: data.password,
-      firstName: data.firstName,
-      lastName: data.lastName,
-    };
-
-    const res_create = await request(app)
-      .post('/auth/register')
-      .set('x-csrf-token', token)
-      .set('Cookie', csrfCookie)
-      .field('email', body_Create.email)
-      .field('password', body_Create.password)
-      .field('firstName', body_Create.firstName)
-      .field('lastName', body_Create.lastName)
-      .attach('profile', imgDIR)
-      .expect('Content-Type', /json/)
-      .expect(201);
-
-    expect(res_create.body.code).toBe('SUCCESSFULLY_CREATED');
-
-    const cookies = res_create.headers['set-cookie'];
-    expect(cookies).toBeDefined();
-
-    let accessTokenCookie;
-
-    if (Array.isArray(cookies)) {
-      accessTokenCookie = cookies
-        .map((cookie) => cookie.split('; ')[0])
-        .find((cookie) => cookie.startsWith('accessToken='));
-    } else if (typeof cookies === 'string') {
-      accessTokenCookie = cookies
-        .split('; ')
-        .find((cookie) => cookie.startsWith('accessToken='));
-    }
     const body = {
       token: '123546',
     };
 
-    newUserCookie = accessTokenCookie;
-    newUserEmail = body_Create.email;
-    newUserPassword = body_Create.password;
+    newUserCookie = user.accessTokenCookie;
+    newUserEmail = user.email;
+    newUserPassword = user.password;
+
     const res = await request(app)
-      .post('/auth/verify-2fa')
+      .post('/auth/verify-Totp')
       .send(body)
-      .set('x-csrf-token', token)
-      .set('Cookie', [accessTokenCookie, csrfCookie])
+      .set('x-csrf-token', csrfData.token)
+      .set('Cookie', [user.accessTokenCookie, csrfData.csrfCookie])
       .expect('Content-Type', /json/)
       .expect(400);
     expect(res.body.code).toBe('TOTP_NOT_ENABLED');
   });
   it('Should return 400, With error Code SCHEMA_VALIDATE_ERROR', async () => {
     const res = await request(app)
-      .post('/auth/verify-2fa')
+      .post('/auth/verify-Totp')
       .set('x-csrf-token', csrfToken)
       .set('Cookie', csrfCookieData)
       .expect('Content-Type', /json/)
@@ -215,7 +105,7 @@ describe('POST /auth/generate-2fa', () => {
   });
   it('Should return 400, With error Code SCHEMA_VALIDATE_ERROR', async () => {
     const res = await request(app)
-      .post('/auth/verify-2fa')
+      .post('/auth/verify-Totp')
       .set('x-csrf-token', csrfToken)
       .set('Cookie', [userCookie, csrfCookieData])
       .expect('Content-Type', /json/)
@@ -228,8 +118,9 @@ describe('POST /auth/generate-2fa', () => {
     const body = {
       token,
     };
+
     const res = await request(app)
-      .post('/auth/verify-2fa')
+      .post('/auth/verify-Totp')
       .send(body)
       .set('x-csrf-token', csrfToken)
       .set('Cookie', [userCookie, csrfCookieData])
@@ -245,7 +136,7 @@ describe('POST /auth/generate-2fa', () => {
       token,
     };
     const res = await request(app)
-      .post('/auth/verify-2fa')
+      .post('/auth/verify-Totp')
       .send(body)
       .set('x-csrf-token', csrfToken)
       .set('Cookie', csrfCookieData)
@@ -261,7 +152,7 @@ describe('POST /auth/generate-2fa', () => {
       otp: '325615',
     };
     const res = await request(app)
-      .post('/auth/remove-2fa/email')
+      .post('/auth/remove-Totp/email')
       .send(body)
       .set('x-csrf-token', csrfToken)
       .set('Cookie', csrfCookieData)
@@ -277,7 +168,7 @@ describe('POST /auth/generate-2fa', () => {
       otp: '325615',
     };
     const res = await request(app)
-      .post('/auth/remove-2fa/email')
+      .post('/auth/remove-Totp/email')
       .send(body)
       .set('x-csrf-token', csrfToken)
       .set('Cookie', csrfCookieData)
@@ -293,7 +184,7 @@ describe('POST /auth/generate-2fa', () => {
       otp: '325615',
     };
     const res = await request(app)
-      .post('/auth/remove-2fa/email')
+      .post('/auth/remove-Totp/email')
       .send(body)
       .set('x-csrf-token', csrfToken)
       .set('Cookie', csrfCookieData)
@@ -308,7 +199,7 @@ describe('POST /auth/generate-2fa', () => {
       password: newUserPassword,
     };
     const res = await request(app)
-      .post('/auth/remove-2fa/email')
+      .post('/auth/remove-Totp/email')
       .send(body)
       .set('x-csrf-token', csrfToken)
       .set('Cookie', csrfCookieData)
@@ -334,7 +225,7 @@ describe('POST /auth/generate-2fa', () => {
       otp: otpString,
     };
     const res = await request(app)
-      .post('/auth/remove-2fa/email')
+      .post('/auth/remove-Totp/email')
       .send(body)
       .set('x-csrf-token', csrfToken)
       .set('Cookie', csrfCookieData)
@@ -342,9 +233,10 @@ describe('POST /auth/generate-2fa', () => {
 
     expect(res.body.code).toBe('SUCCESSFULLY_REMOVED_TOTP');
   });
+
   it('Should return 401, With error Code NOT_LOGGED_IN', async () => {
     const res = await request(app)
-      .post('/auth/remove-2fa/2fa')
+      .post('/auth/remove-Totp/Totp')
       .set('x-csrf-token', csrfToken)
       .set('Cookie', csrfCookieData)
       .expect('Content-Type', /json/)
@@ -353,19 +245,20 @@ describe('POST /auth/generate-2fa', () => {
   });
   it('Should return 400, With error Code SCHEMA_VALIDATE_ERROR', async () => {
     const res = await request(app)
-      .post('/auth/remove-2fa/2fa')
+      .post('/auth/remove-Totp/Totp')
       .set('x-csrf-token', csrfToken)
       .set('Cookie', [userCookie, csrfCookieData])
       .expect('Content-Type', /json/)
       .expect(400);
     expect(res.body.code).toBe('SCHEMA_VALIDATE_ERROR');
   });
+
   it('Should return 401, With error Code UNAUTHORIZED_INVALID_OR_EXPIRED_TOKEN', async () => {
     const body = {
       token: '123456',
     };
     const res = await request(app)
-      .post('/auth/remove-2fa/2fa')
+      .post('/auth/remove-Totp/Totp')
       .send(body)
       .set('x-csrf-token', csrfToken)
       .set('Cookie', [
@@ -377,73 +270,17 @@ describe('POST /auth/generate-2fa', () => {
     expect(res.body.code).toBe('UNAUTHORIZED_INVALID_OR_EXPIRED_TOKEN');
   });
   it('Should return 400, With error Code INVALID_TOTP_TOKEN', async () => {
-    const csrf_Token = await request(app)
-      .get('/protection/csrf')
-      .expect('Content-Type', /json/)
-      .expect(200);
-    const token = csrf_Token.body.token;
-    expect(token).toBeDefined();
+    const csrfData = await getCsrfTokenAndCookie();
 
-    const csrfCookies = csrf_Token.headers['set-cookie'];
-    expect(csrfCookies).toBeDefined();
-
-    let csrfCookie;
-
-    if (Array.isArray(csrfCookies)) {
-      csrfCookie = csrfCookies
-        .map((cookie) => cookie.split('; ')[0])
-        .find((cookie) => cookie.startsWith('csrf-Token='));
-    } else if (typeof csrfCookies === 'string') {
-      csrfCookie = csrfCookies
-        .split('; ')
-        .find((cookie) => cookie.startsWith('csrf-Token='));
-    }
-
-    const imgDIR = path.join(__dirname, './avatar.jpg');
-    const data = generateRandomData();
-    const body_Create = {
-      email: data.email,
-      password: data.password,
-      firstName: data.firstName,
-      lastName: data.lastName,
-    };
-
-    const res_create = await request(app)
-      .post('/auth/register')
-      .set('x-csrf-token', token)
-      .set('Cookie', csrfCookie)
-      .field('email', body_Create.email)
-      .field('password', body_Create.password)
-      .field('firstName', body_Create.firstName)
-      .field('lastName', body_Create.lastName)
-      .attach('profile', imgDIR)
-      .expect('Content-Type', /json/)
-      .expect(201);
-
-    expect(res_create.body.code).toBe('SUCCESSFULLY_CREATED');
-
-    const cookies = res_create.headers['set-cookie'];
-    expect(cookies).toBeDefined();
-
-    let accessTokenCookie;
-
-    if (Array.isArray(cookies)) {
-      accessTokenCookie = cookies
-        .map((cookie) => cookie.split('; ')[0])
-        .find((cookie) => cookie.startsWith('accessToken='));
-    } else if (typeof cookies === 'string') {
-      accessTokenCookie = cookies
-        .split('; ')
-        .find((cookie) => cookie.startsWith('accessToken='));
-    }
-    userCookie = accessTokenCookie;
-    userEmail = body_Create.email;
-    userPassword = body_Create.password;
-    csrfCookieData = csrfCookie;
-    csrfToken = token;
+    const user = await createDynamicUser(csrfData.token, csrfData.csrfCookie);
+    userCookie = user.accessTokenCookie;
+    userEmail = user.email;
+    userPassword = user.password;
+    csrfCookieData = csrfData.csrfCookie;
+    csrfToken = csrfData.token;
 
     const res_3 = await request(app)
-      .post('/auth/generate-2fa')
+      .post('/auth/generate-Totp')
       .set('x-csrf-token', csrfToken)
       .set('Cookie', [userCookie, csrfCookieData])
       .expect('Content-Type', /json/)
@@ -456,7 +293,7 @@ describe('POST /auth/generate-2fa', () => {
       token: '123455',
     };
     const res = await request(app)
-      .post('/auth/remove-2fa/2fa')
+      .post('/auth/remove-Totp/Totp')
       .send(body)
       .set('x-csrf-token', csrfToken)
       .set('Cookie', [userCookie, csrfCookieData])
@@ -464,13 +301,14 @@ describe('POST /auth/generate-2fa', () => {
       .expect(400);
     expect(res.body.code).toBe('INVALID_TOTP_TOKEN');
   });
+
   it('Should return 200, With error Code SUCCESSFULLY_REMOVED_TOTP', async () => {
     const token = generateToken(twpfaKey);
     const body = {
       token,
     };
     const res = await request(app)
-      .post('/auth/remove-2fa/2fa')
+      .post('/auth/remove-Totp/Totp')
       .send(body)
       .set('x-csrf-token', csrfToken)
       .set('Cookie', [userCookie, csrfCookieData])
