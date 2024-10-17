@@ -5,13 +5,8 @@ import {
   NameChange,
 } from '@/api/v1/validators/index.Validation';
 import AppError from '@/models/AppErrorModel';
-import {
-  PasswordResetEmail,
-  PasswordResetToken,
-  updateName,
-} from '../../service/auth/auth.U.service';
+import userUpdateService from '../../service/auth/auth.U.service';
 
-// This controller For Resetting The Password using Token or Email and new Password
 const passwordReset = async (
   req: Request,
   res: Response,
@@ -31,7 +26,7 @@ const passwordReset = async (
           'SCHEMA_VALIDATE_ERROR'
         );
       }
-      const token = await PasswordResetToken(
+      const token = await userUpdateService.resetPasswordByToken(
         accessToken,
         req.body.otp,
         req.body.newPassword,
@@ -73,7 +68,7 @@ const passwordReset = async (
           'SCHEMA_VALIDATE_ERROR'
         );
       }
-      const token = await PasswordResetEmail(
+      const token = await userUpdateService.resetPasswordByEmail(
         req.body.email,
         req.body.otp,
         req.body.newPassword,
@@ -138,7 +133,7 @@ const changeUser_Names = async (
         'SCHEMA_VALIDATE_ERROR'
       );
     }
-    const update = await updateName(
+    const update = await userUpdateService.updateUserNames(
       accessToken,
       req.redis,
       req.body.firstName,

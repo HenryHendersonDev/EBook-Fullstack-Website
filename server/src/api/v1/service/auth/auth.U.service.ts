@@ -1,253 +1,181 @@
 import AppError from '@/models/AppErrorModel';
-import Redis from 'ioredis';
 import jwtService from '@/utils/auth/jwt';
-import {
-  findUserOnDB,
-  findUserOnDBViaID,
-  findUserOnDBviaSessionID,
-} from '../../model/auth/auth.R.model';
-import { findOTPCode } from '../../model/auth/auth.otp.model';
-import {
-  setNewPassword,
-  UpdateUserFirstName,
-  UpdateUserFullName,
-  UpdateUserLastName,
-} from '../../model/auth/auth.U.model';
+import handleError from '@/utils/errorHandle';
+import Redis from 'ioredis';
+import userReadModel from '../../model/auth/auth.R.model';
+import userUpdateModel from '../../model/auth/auth.U.model';
 
-// in This Function we will Get the OTP code and Token Then Reset The password
-const PasswordResetToken = async (
-  accessToken: string,
-  otp: string,
-  newPassword: string,
-  redis: Redis | null
-): Promise<string> => {
-  try {
-    const userSession = jwtService.verify(accessToken, false);
-    if (!userSession) {
-      throw new AppError(
-        'Invalid Access Token',
-        401,
-        true,
-        undefined,
-        false,
-        'UNAUTHORIZED_INVALID_TOKEN'
-      );
-    }
-    const userID = await findUserOnDBviaSessionID(userSession.id, redis);
-    if (!userID) {
-      throw new AppError(
-        'User Not Found',
-        404,
-        true,
-        undefined,
-        false,
-        'USER_NOT_FOUND'
-      );
-    }
-    const user = await findUserOnDBViaID(userID.userId);
-    if (!user) {
-      throw new AppError(
-        'User Not Found',
-        404,
-        true,
-        undefined,
-        false,
-        'USER_NOT_FOUND'
-      );
-    }
+interface IUserUpdateService {
+  resetPasswordByToken(
+    accessToken: string,
+    otp: string,
+    newPassword: string,
+    redis: Redis | null
+  ): Promise<string>;
 
-    const isTrueOTP = await findOTPCode(user.id, otp, redis);
-    if (!isTrueOTP) {
-      throw new AppError(
-        'Invalid Otp Code please Try again',
-        400,
-        true,
-        undefined,
-        false,
-        'INVALID_OTP'
-      );
-    }
-    const passwordSet = await setNewPassword(user.id, newPassword, redis);
-    if (!passwordSet) {
-      throw new AppError(
-        'Something Went Wrong Updating user password',
-        500,
-        false,
-        undefined,
-        false,
-        'SERVER_ERROR'
-      );
-    }
-    const newToken = await jwtService.sign(user.id, redis);
-    return newToken;
-  } catch (error) {
-    if (error instanceof AppError) {
-      throw error;
-    } else if (error instanceof Error) {
-      throw new AppError(
-        'Something Went Wrong While Resetting User password Using Token',
-        500,
-        false,
-        error,
-        true,
-        'SERVER_ERROR'
-      );
-    }
-    throw new Error(`An unexpected error occurred: ${error}`);
-  }
-};
+  resetPasswordByEmail(
+    email: string,
+    otp: string,
+    newPassword: string,
+    redis: Redis | null
+  ): Promise<string>;
 
-// in This Function we will Get the OTP code and Email Then Reset The password
-const PasswordResetEmail = async (
-  email: string,
-  otp: string,
-  newPassword: string,
-  redis: Redis | null
-): Promise<string> => {
-  try {
-    const DBuser = await findUserOnDB(email);
-    if (!DBuser) {
-      throw new AppError(
-        'User Not Found',
-        404,
-        true,
-        undefined,
-        false,
-        'USER_NOT_FOUND'
-      );
-    }
-    const isTrueOTP = await findOTPCode(DBuser.id, otp, redis);
-    if (!isTrueOTP) {
-      throw new AppError(
-        'Invalid Otp Code please Try again',
-        400,
-        true,
-        undefined,
-        false,
-        'INVALID_OTP'
-      );
-    }
-    const passwordSet = await setNewPassword(DBuser.id, newPassword, redis);
-    if (!passwordSet) {
-      throw new AppError(
-        'Something Went Wrong Updating user password',
-        500,
-        false,
-        undefined,
-        false,
-        'SERVER_ERROR'
-      );
-    }
-    const newToken = await jwtService.sign(DBuser.id, redis);
-    return newToken;
-  } catch (error) {
-    if (error instanceof AppError) {
-      throw error;
-    } else if (error instanceof Error) {
-      throw new AppError(
-        'Something Went Wrong While Resetting User password Using Email',
-        500,
-        false,
-        error,
-        true,
-        'SERVER_ERROR'
-      );
-    }
-    throw new Error(`An unexpected error occurred: ${error}`);
-  }
-};
+  updateUserNames(
+    accessToken: string,
+    redis: Redis | null,
+    firstName?: string,
+    lastName?: string
+  ): Promise<boolean>;
+}
 
-// in This Function we will Update user First and Last names
-const updateName = async (
-  accessToken: string,
-  redis: Redis | null,
-  firstName?: string,
-  lastName?: string
-): Promise<boolean> => {
-  try {
-    const userSession = jwtService.verify(accessToken, false);
-    if (!userSession) {
-      throw new AppError(
-        'Invalid Access Token',
-        401,
-        true,
-        undefined,
-        false,
-        'UNAUTHORIZED_INVALID_TOKEN'
-      );
-    }
-    const userID = await findUserOnDBviaSessionID(userSession.id, redis);
-    if (!userID) {
-      throw new AppError(
-        'User Not Found',
-        404,
-        true,
-        undefined,
-        false,
-        'USER_NOT_FOUND'
-      );
-    }
+/**
+ *
+ * Purpose: Update User Service.
+ *
+ */
 
-    if (firstName && !lastName) {
-      const newUser = await UpdateUserFirstName(firstName, userID.userId);
-      if (!newUser) {
+class UserUpdateService implements IUserUpdateService {
+  /**
+   *
+   * Purpose: Resetting Password using Token
+   *
+   * Context: Reset the password using the access token provided
+   *
+   * Returns: new Access token <string>
+   *
+   */
+
+  async resetPasswordByToken(
+    accessToken: string,
+    otp: string,
+    newPassword: string,
+    redis: Redis | null
+  ): Promise<string> {
+    try {
+      const userSession = jwtService.verify(accessToken, false);
+      if (!userSession) {
         throw new AppError(
-          'Something Went Wrong Updating user firstName',
-          500,
-          false,
+          'User Not Found',
+          401,
+          true,
           undefined,
           false,
-          'SERVER_ERROR'
+          'UNAUTHORIZED_INVALID_OR_EXPIRED_TOKEN'
         );
       }
-      return true;
-    } else if (lastName && !firstName) {
-      const newUser = await UpdateUserLastName(lastName, userID.userId);
-      if (!newUser) {
-        throw new AppError(
-          'Something Went Wrong Updating user firstName',
-          500,
-          false,
-          undefined,
-          false,
-          'SERVER_ERROR'
-        );
-      }
-      return true;
-    } else if (firstName && lastName) {
-      const newUser = await UpdateUserFullName(
-        firstName,
-        lastName,
-        userID.userId
+      const userID = await userReadModel.findUserBySessionIdInDatabase(
+        userSession.id,
+        redis
       );
-      if (!newUser) {
-        throw new AppError(
-          'Something Went Wrong Updating user firstName',
-          500,
-          false,
-          undefined,
-          false,
-          'SERVER_ERROR'
-        );
-      }
-      return true;
-    }
-    return false;
-  } catch (error) {
-    if (error instanceof AppError) {
-      throw error;
-    } else if (error instanceof Error) {
-      throw new AppError(
-        'Something Went Wrong While Updating user names',
-        500,
-        false,
-        error,
-        true,
-        'SERVER_ERROR'
+      const user = await userReadModel.findUserInDatabase({
+        userID: userID.userId,
+      });
+      await userReadModel.retrieveOTPCode(user.id, otp, redis);
+      const passwordSet = await userUpdateModel.setNewPassword(
+        user.id,
+        newPassword,
+        redis
       );
+      const newAccessToken = await jwtService.sign(passwordSet.id, redis);
+      return newAccessToken;
+    } catch (error) {
+      return handleError(error, 'Resetting password using Access token');
     }
-    throw new Error(`An unexpected error occurred: ${error}`);
   }
-};
 
-export { PasswordResetToken, PasswordResetEmail, updateName };
+  /**
+   *
+   * Purpose: Resetting Password using Email
+   *
+   * Context: Reset the password using the access Email provided
+   *
+   * Returns: new Access token <string>
+   *
+   */
+
+  async resetPasswordByEmail(
+    email: string,
+    otp: string,
+    newPassword: string,
+    redis: Redis | null
+  ): Promise<string> {
+    try {
+      const user = await userReadModel.findUserInDatabase({
+        email,
+      });
+      await userReadModel.retrieveOTPCode(user.id, otp, redis);
+      const passwordSet = await userUpdateModel.setNewPassword(
+        user.id,
+        newPassword,
+        redis
+      );
+      const newAccessToken = await jwtService.sign(passwordSet.id, redis);
+      return newAccessToken;
+    } catch (error) {
+      return handleError(error, 'Resetting password using Email Address');
+    }
+  }
+
+  /**
+   *
+   * Purpose: Update user name
+   *
+   * Context: update user first or last or both first and last names.
+   *
+   * Returns: boolean most of the time true otherwise it throw error
+   *
+   */
+
+  async updateUserNames(
+    accessToken: string,
+    redis: Redis | null,
+    firstName?: string,
+    lastName?: string
+  ): Promise<boolean> {
+    try {
+      const userSession = jwtService.verify(accessToken, false);
+      if (!userSession) {
+        throw new AppError(
+          'User Not Found',
+          401,
+          true,
+          undefined,
+          false,
+          'UNAUTHORIZED_INVALID_OR_EXPIRED_TOKEN'
+        );
+      }
+      const userID = await userReadModel.findUserBySessionIdInDatabase(
+        userSession.id,
+        redis
+      );
+
+      if (firstName && !lastName) {
+        await userUpdateModel.updateFirstName(userID.userId, firstName);
+        return true;
+      } else if (lastName && !firstName) {
+        await userUpdateModel.updateLastName(userID.userId, lastName);
+        return true;
+      } else if (firstName && lastName) {
+        await userUpdateModel.updateFullName(
+          userID.userId,
+          firstName,
+          lastName
+        );
+        return true;
+      }
+      return false;
+    } catch (error) {
+      return handleError(error, 'updating user first or last or both name');
+    }
+  }
+}
+
+/**
+ *
+ * Purpose: Update User Service.
+ *
+ */
+
+const userUpdateService = new UserUpdateService();
+
+export default userUpdateService;

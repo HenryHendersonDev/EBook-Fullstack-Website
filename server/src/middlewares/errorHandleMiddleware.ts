@@ -156,10 +156,7 @@ const errorMiddleware = async (
   next: NextFunction
 ): Promise<void> => {
   const { message, code, status } = await handleError(err, req);
-  if (
-    code === 'UNAUTHORIZED_SESSION_EXPIRED' ||
-    code === 'UNAUTHORIZED_INVALID_TOKEN'
-  ) {
+  if (code === 'UNAUTHORIZED_INVALID_OR_EXPIRED_TOKEN') {
     res.cookie('accessToken', '', {
       httpOnly: true,
       secure: process.env['NODE_ENV'] === 'production',

@@ -1,9 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
 import { registerSchema } from '@/api/v1/validators/index.Validation';
 import AppError from '@/models/AppErrorModel';
-import userRegisterService from '../../service/auth/auth.C.service';
+import userCreateService from '../../service/auth/auth.C.service';
 
-// This controller for Creating New user and Returning The access token as Cookie and Status Code 201
 const createUserAccount = async (
   req: Request,
   res: Response,
@@ -21,7 +20,8 @@ const createUserAccount = async (
         'SCHEMA_VALIDATE_ERROR'
       );
     }
-    const token = await userRegisterService(
+
+    const token = await userCreateService.userRegisterService(
       {
         email: req.body.email,
         password: req.body.password,

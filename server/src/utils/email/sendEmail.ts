@@ -1,5 +1,5 @@
-import AppError from '@/models/AppErrorModel';
 import nodemailer from 'nodemailer';
+import handleError from '../errorHandle';
 
 const sendEmail = async (to: string, subject: string, text: string) => {
   try {
@@ -25,19 +25,7 @@ const sendEmail = async (to: string, subject: string, text: string) => {
     }
     return true;
   } catch (error) {
-    if (error instanceof AppError) {
-      throw error;
-    } else if (error instanceof Error) {
-      throw new AppError(
-        'Something went Wrong While Sending The Email',
-        500,
-        false,
-        error,
-        true,
-        'SERVER_ERROR'
-      );
-    }
-    throw new Error(`An unexpected error occurred: ${error}`);
+    return handleError(error, 'Sending Email');
   }
 };
 export default sendEmail;

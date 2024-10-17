@@ -1,129 +1,113 @@
-import AppError from '@/models/AppErrorModel';
+import handleError from '@/utils/errorHandle';
 import Redis from 'ioredis';
-import jwtService from '@/utils/auth/jwt';
+import userReadModel from '../../model/auth/auth.R.model';
 import passwordService from '@/utils/auth/bcrypt';
-import {
-  findUserOnDB,
-  findUserOnDBViaIdPUBLIC_DATA,
-  findUserOnDBviaSessionID,
-} from '../../model/auth/auth.R.model';
+import AppError from '@/models/AppErrorModel';
+import jwtService from '@/utils/auth/jwt';
 
 interface Login {
   email: string;
   password: string;
 }
-
-// in this service we will get user data and and check if true we will return cookie.
-const userLoginService = async (
-  user: Login,
-  redis: Redis | null
-): Promise<string> => {
-  try {
-    const DBuser = await findUserOnDB(user.email);
-    if (!DBuser) {
-      throw new AppError(
-        'User Not Found',
-        404,
-        true,
-        undefined,
-        false,
-        'USER_NOT_FOUND'
-      );
-    }
-    const checkPassword = await passwordService.verify(
-      user.password,
-      DBuser.password
-    );
-    if (!checkPassword) {
-      throw new AppError(
-        'Invalid Password',
-        400,
-        true,
-        undefined,
-        false,
-        'INVALID_PASSWORD'
-      );
-    }
-    const accessToken = await jwtService.sign(DBuser.id, redis);
-    return accessToken;
-  } catch (error) {
-    if (error instanceof AppError) {
-      throw error;
-    } else if (error instanceof Error) {
-      throw new AppError(
-        'Something Went Wrong While LOGGING IN user',
-        500,
-        false,
-        error,
-        true,
-        'SERVER_ERROR'
-      );
-    }
-    throw new Error(`An unexpected error occurred: ${error}`);
-  }
-};
-
-interface PublicDATA {
+interface PublicData {
   email: string;
   firstName: string;
   lastName: string | null;
 }
+interface IUserReadService {
+  login(user: Login, redis: Redis | null): Promise<string>;
+  getPublicData(accessToken: string, redis: Redis | null): Promise<PublicData>;
+}
 
-// in this service we will get user data and Return.
-const getUserDataService = async (
-  accessToken: string,
-  redis: Redis | null
-): Promise<PublicDATA> => {
-  try {
-    const userSession = jwtService.verify(accessToken, false);
-    if (!userSession) {
-      throw new AppError(
-        'Invalid Access Token',
-        401,
-        true,
-        undefined,
-        false,
-        'UNAUTHORIZED_INVALID_TOKEN'
+/**
+ *
+ * Purpose: User Reading Service.
+ *
+ *
+ */
+
+class UserReadService implements IUserReadService {
+  /**
+   *
+   * Purpose: Login User
+   *
+   * Context: Using User email and password we will Login User
+   *
+   * Returns: Access toke String
+   *
+   */
+
+  async login(user: Login, redis: Redis | null): Promise<string> {
+    try {
+      const userDb = await userReadModel.findUserInDatabase({
+        email: user.email,
+      });
+      const isValidPassword = await passwordService.verify(
+        user.password,
+        userDb.password
       );
+      if (!isValidPassword) {
+        throw new AppError(
+          'Invalid Password',
+          400,
+          true,
+          undefined,
+          false,
+          'INVALID_PASSWORD'
+        );
+      }
+      const accessToken = await jwtService.sign(userDb.id, redis);
+      return accessToken;
+    } catch (error) {
+      return handleError(error, 'Login user');
     }
-    const userID = await findUserOnDBviaSessionID(userSession.id, redis);
-    if (!userID) {
-      throw new AppError(
-        'User Not Found',
-        404,
-        true,
-        undefined,
-        false,
-        'USER_NOT_FOUND'
-      );
-    }
-    const PublicData = await findUserOnDBViaIdPUBLIC_DATA(userID.userId);
-    if (!PublicData) {
-      throw new AppError(
-        'User Not Found',
-        404,
-        true,
-        undefined,
-        false,
-        'USER_NOT_FOUND'
-      );
-    }
-    return PublicData;
-  } catch (error) {
-    if (error instanceof AppError) {
-      throw error;
-    } else if (error instanceof Error) {
-      throw new AppError(
-        'Something Went Wrong While Getting User Public Data',
-        500,
-        false,
-        error,
-        true,
-        'SERVER_ERROR'
-      );
-    }
-    throw new Error(`An unexpected error occurred: ${error}`);
   }
-};
+  /**
+   *
+   * Purpose: get User public Data
+   *
+   * Context: Using access token Get User publicly available Information from database
+   *
+   * Returns: <PublicData> object
+   *
+   */
 
-export { userLoginService, getUserDataService };
+  async getPublicData(
+    accessToken: string,
+    redis: Redis | null
+  ): Promise<PublicData> {
+    try {
+      const userSession = jwtService.verify(accessToken, false);
+      if (!userSession) {
+        throw new AppError(
+          'User Not Found',
+          401,
+          true,
+          undefined,
+          false,
+          'UNAUTHORIZED_INVALID_OR_EXPIRED_TOKEN'
+        );
+      }
+      const userID = await userReadModel.findUserBySessionIdInDatabase(
+        userSession.id,
+        redis
+      );
+      const PublicData = await userReadModel.findUserPublicDataInDatabase(
+        userID.userId
+      );
+      return PublicData;
+    } catch (error) {
+      return handleError(error, 'Getting user Pulic data');
+    }
+  }
+}
+
+/**
+ *
+ * Purpose: User Reading Service.
+ *
+ */
+
+const userReadService = new UserReadService();
+
+export default userReadService;

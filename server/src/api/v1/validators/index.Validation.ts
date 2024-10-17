@@ -37,6 +37,21 @@ export const delUserSchema = Joi.object({
   otp: Joi.string().length(6).required(),
 });
 
+export const twoFaVerifySchema = Joi.object({
+  email: Joi.string().email(),
+  token: Joi.string().length(6).required(),
+});
+
+export const removeTotpUsingTotpSchema = Joi.object({
+  token: Joi.string().length(6).required(),
+});
+
+export const removeTotpUsingEmailSchema = Joi.object({
+  email: Joi.string().email().required(),
+  password: Joi.string().min(6).required(),
+  otp: Joi.string().length(6).required(),
+});
+
 // 2. 📚 **Product Catalog**
 export const createProductSchema = Joi.object({
   title: Joi.string().min(1).required(),

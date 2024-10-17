@@ -1,13 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
 import { loginSchema } from '@/api/v1/validators/index.Validation';
 import AppError from '@/models/AppErrorModel';
-import userRegisterService from '../../service/auth/auth.C.service';
-import {
-  getUserDataService,
-  userLoginService,
-} from '../../service/auth/auth.R.service';
+import userReadService from '../../service/auth/auth.R.service';
 
-// This controller for Logging In the user and return access token as cookie with status Code 200
 const loginUserAccount = async (
   req: Request,
   res: Response,
@@ -25,7 +20,7 @@ const loginUserAccount = async (
         'SCHEMA_VALIDATE_ERROR'
       );
     }
-    const token = await userLoginService(
+    const token = await userReadService.login(
       {
         email: req.body.email,
         password: req.body.password,
@@ -65,7 +60,10 @@ const getUserInfo = async (req: Request, res: Response, next: NextFunction) => {
         'NOT_LOGGED_IN'
       );
     }
-    const userDATA = await getUserDataService(accessToken, req.redis);
+    const userDATA = await userReadService.getPublicData(
+      accessToken,
+      req.redis
+    );
     res.status(200).json({
       message: 'User has been successfully Get user Data.',
       code: 'SUCCESSFULLY_GET_USER_DATA',

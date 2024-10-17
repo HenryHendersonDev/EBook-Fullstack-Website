@@ -1,9 +1,9 @@
-import AppError from '@/models/AppErrorModel';
-import Redis from 'ioredis';
-import jwtService from '@/utils/auth/jwt';
-import { handleUpload, handleDelete } from '@/config/cloudinaryConfig';
 import passwordService from '@/utils/auth/bcrypt';
-import { saveNewUserOnDB } from '../../model/auth/auth.C.model';
+import storageUtils from '@/utils/cloudinaryUtils';
+import handleError from '@/utils/errorHandle';
+import Redis from 'ioredis';
+import userCreateModel from '../../model/auth/auth.C.model';
+import jwtService from '@/utils/auth/jwt';
 
 interface Register {
   email: string;
@@ -12,61 +12,68 @@ interface Register {
   lastName: string | null;
   filePath: string | null;
 }
+interface IUserCreateService {
+  userRegisterService(user: Register, redis: Redis | null): Promise<string>;
+}
 
-// in this service we will get user data and save the db then return the access token.
-const userRegisterService = async (user: Register, redis: Redis | null) => {
-  try {
-    const hashPassword = await passwordService.generate(user.password);
-    user.password = hashPassword;
-    if (user.filePath) {
-      const { url, public_id } = await handleUpload(user.filePath);
-      const data = {
-        email: user.email,
-        password: hashPassword,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        filePath: url ? url : null,
-        imagePublicID: public_id ? public_id : null,
-      };
-      try {
-        const userID = await saveNewUserOnDB(data);
-        const accessToken = await jwtService.sign(userID, redis);
-        return accessToken;
-      } catch (error) {
-        await handleDelete(public_id, 'image');
-        if (error instanceof AppError) {
-          throw error;
-        } else if (error instanceof Error) {
-          throw new AppError(
-            'Something Went Wrong While Registering user',
-            500,
-            false,
-            error,
-            true,
-            'SERVER_ERROR'
-          );
+/**
+ *
+ * Purpose: User Service for Creating
+ *
+ */
+
+class UserCreateService implements IUserCreateService {
+  /**
+   *
+   * Purpose: Create Model
+   *
+   * Context: Using Given User Information creating new User with Hashing Password
+   *
+   * Returns: Json Web Token Access Token
+   *
+   */
+
+  async userRegisterService(
+    user: Register,
+    redis: Redis | null
+  ): Promise<string> {
+    try {
+      const hashPassword = await passwordService.generate(user.password);
+      user.password = hashPassword;
+
+      if (user.filePath) {
+        const { url, public_id } = await storageUtils.upload(user.filePath);
+        const data = {
+          email: user.email,
+          password: hashPassword,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          filePath: url ? url : null,
+          imagePublicID: public_id ? public_id : null,
+        };
+        try {
+          const userID = await userCreateModel.createNewUserInDatabase(data);
+          const accessToken = await jwtService.sign(userID, redis);
+          return accessToken;
+        } catch (error) {
+          return handleError(error, 'creating user');
         }
-        throw new Error(`An unexpected error occurred: ${error}`);
       }
+      const userID = await userCreateModel.createNewUserInDatabase(user);
+      const accessToken = await jwtService.sign(userID, redis);
+      return accessToken;
+    } catch (error) {
+      return handleError(error, 'creating user');
     }
-    const userID = await saveNewUserOnDB(user);
-    const accessToken = await jwtService.sign(userID, redis);
-    return accessToken;
-  } catch (error) {
-    if (error instanceof AppError) {
-      throw error;
-    } else if (error instanceof Error) {
-      throw new AppError(
-        'Something Went Wrong While Registering user',
-        500,
-        false,
-        error,
-        true,
-        'SERVER_ERROR'
-      );
-    }
-    throw new Error(`An unexpected error occurred: ${error}`);
   }
-};
+}
 
-export default userRegisterService;
+/**
+ *
+ * Purpose: Creating User Service.
+ *
+ */
+
+const userCreateService = new UserCreateService();
+
+export default userCreateService;

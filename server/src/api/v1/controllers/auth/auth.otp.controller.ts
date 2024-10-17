@@ -1,17 +1,17 @@
 import { NextFunction, Request, Response } from 'express';
 import { passwordResetRequestSchema } from '@/api/v1/validators/index.Validation';
 import AppError from '@/models/AppErrorModel';
-import {
-  userOTPreqViaEmail,
-  userOTPreqViaToken,
-} from '../../service/auth/auth.otp.service';
+import userTwoFactorAuthService from '../../service/auth/auth.2fa.service';
 
 // This controller For Sending  OTP code to user email Address.
 const reqOtoCODE = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { accessToken } = req.signedCookies;
     if (accessToken) {
-      const isSend = await userOTPreqViaToken(accessToken, req.redis);
+      const isSend = await userTwoFactorAuthService.otpRequestByAccessToken(
+        accessToken,
+        req.redis
+      );
       if (!isSend) {
         throw new AppError(
           'Something Went Wrong While Sending The Email',
@@ -38,7 +38,10 @@ const reqOtoCODE = async (req: Request, res: Response, next: NextFunction) => {
           'SCHEMA_VALIDATE_ERROR'
         );
       }
-      const isSend = await userOTPreqViaEmail(req.body.email, req.redis);
+      const isSend = await userTwoFactorAuthService.otpRequestByEmail(
+        req.body.email,
+        req.redis
+      );
 
       if (!isSend) {
         throw new AppError(

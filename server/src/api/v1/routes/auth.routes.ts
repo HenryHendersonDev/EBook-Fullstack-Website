@@ -15,6 +15,12 @@ import {
   passwordReset,
 } from '../controllers/auth/auth.U.controller';
 import { createUserAccount } from '../controllers/auth/auth.C.controller';
+import {
+  createTotp,
+  removeTotpUsingEmail,
+  removeTotpUsingTotp,
+  verifyTotp,
+} from '../controllers/auth/auth.2fa.controller';
 
 const router = express.Router();
 
@@ -31,4 +37,14 @@ router.post('/password-reset', csrfProtectionMiddleware, passwordReset);
 router.post('/change-name', csrfProtectionMiddleware, changeUser_Names);
 router.get('/me', getUserInfo);
 router.delete('/delete-me', csrfProtectionMiddleware, deleteUser);
+
+router.post('/generate-Totp', csrfProtectionMiddleware, createTotp);
+router.post('/verify-Totp', csrfProtectionMiddleware, verifyTotp);
+router.post(
+  '/remove-Totp/email',
+  csrfProtectionMiddleware,
+  removeTotpUsingEmail
+);
+router.post('/remove-Totp/Totp', csrfProtectionMiddleware, removeTotpUsingTotp);
+
 export default router;

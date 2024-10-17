@@ -1,12 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
 import { delUserSchema } from '@/api/v1/validators/index.Validation';
 import AppError from '@/models/AppErrorModel';
-import {
-  userDeleteService,
-  userLogoutService,
-} from '../../service/auth/auth.D.service';
+import userDeleteService from '../../service/auth/auth.D.service';
 
-// This controller for Logging In the user and return access token as cookie with status Code 200
 const logoutUserAccount = async (
   req: Request,
   res: Response,
@@ -25,7 +21,7 @@ const logoutUserAccount = async (
       );
     }
 
-    await userLogoutService(accessToken, req.redis);
+    await userDeleteService.userLogOut(accessToken, req.redis);
     res
       .cookie('accessToken', '', {
         httpOnly: true,
@@ -45,7 +41,7 @@ const logoutUserAccount = async (
   }
 };
 
-// This Controller for Getting user Public Data
+// This Controller for Deleting User
 const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { accessToken } = req.signedCookies;
@@ -70,7 +66,7 @@ const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
         'SCHEMA_VALIDATE_ERROR'
       );
     }
-    await userDeleteService(accessToken, req.body.otp, req.redis);
+    await userDeleteService.userDelete(accessToken, req.body.otp, req.redis);
     res
       .cookie('accessToken', '', {
         httpOnly: true,
