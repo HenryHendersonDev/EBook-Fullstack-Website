@@ -5,6 +5,7 @@ import {
   getUserInfo,
   loginUserAccount,
   validateAccountVerification,
+  loginUserAccountTwoFactor,
 } from '../controllers/auth/auth.R.controller';
 import {
   deleteUser,
@@ -37,6 +38,11 @@ router.post(
   createUserAccount
 );
 router.post('/login', csrfProtectionMiddleware, loginUserAccount);
+router.post(
+  '/login-two-factor',
+  csrfProtectionMiddleware,
+  loginUserAccountTwoFactor
+);
 router.post('/logout', csrfProtectionMiddleware, logoutUserAccount);
 router.post('/otp-request', csrfProtectionMiddleware, reqOtoCODE);
 router.post('/password-reset', csrfProtectionMiddleware, passwordReset);

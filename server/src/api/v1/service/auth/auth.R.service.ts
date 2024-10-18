@@ -6,6 +6,7 @@ import AppError from '@/models/AppErrorModel';
 import jwtService from '@/utils/auth/jwt';
 import userVerifyLinkGenerate from '@/utils/auth/emailVerifyEncrypt';
 import userUpdateModel from '../../model/auth/auth.U.model';
+import totpUtils from '@/utils/auth/totp';
 
 interface Login {
   email: string;
@@ -16,8 +17,24 @@ interface PublicData {
   firstName: string;
   lastName: string | null;
 }
+
+interface LoginTwoFactorObject {
+  email: boolean;
+  totp: boolean;
+}
 interface IUserReadService {
-  login(user: Login, redis: Redis | null): Promise<string>;
+  login(
+    user: Login,
+    redis: Redis | null
+  ): Promise<string | LoginTwoFactorObject>;
+
+  loginTwoFactor(
+    user: Login,
+    method: string,
+    key: string,
+    redis: Redis | null
+  ): Promise<string>;
+
   getPublicData(accessToken: string, redis: Redis | null): Promise<PublicData>;
   validateAccountVerification(
     data: string,
@@ -45,11 +62,105 @@ class UserReadService implements IUserReadService {
    *
    */
 
-  async login(user: Login, redis: Redis | null): Promise<string> {
+  async loginTwoFactor(
+    user: Login,
+    method: string,
+    key: string,
+    redis: Redis | null
+  ): Promise<string> {
+    try {
+      if (method === 'totp') {
+        const userDb = await userReadModel.findUserInDatabase({
+          email: user.email,
+        });
+        const isValidPassword = await passwordService.verify(
+          user.password,
+          userDb.password
+        );
+        if (!isValidPassword) {
+          throw new AppError(
+            'Invalid Password',
+            400,
+            true,
+            undefined,
+            false,
+            'INVALID_PASSWORD'
+          );
+        }
+
+        if (!userDb.totpSecret) {
+          throw new AppError(
+            '2FA not enabled for this user',
+            400,
+            true,
+            undefined,
+            false,
+            'TOTP_NOT_ENABLED'
+          );
+        }
+        const isValid = totpUtils.verifyToken(userDb.totpSecret, key);
+        if (!isValid) {
+          throw new AppError(
+            'Invalid Totp Token',
+            400,
+            true,
+            undefined,
+            false,
+            'INVALID_TOTP_TOKEN'
+          );
+        }
+        const accessToken = await jwtService.sign(userDb.id, redis);
+        return accessToken;
+      }
+      const userDb = await userReadModel.findUserInDatabase({
+        email: user.email,
+      });
+      const isValidPassword = await passwordService.verify(
+        user.password,
+        userDb.password
+      );
+      if (!isValidPassword) {
+        throw new AppError(
+          'Invalid Password',
+          400,
+          true,
+          undefined,
+          false,
+          'INVALID_PASSWORD'
+        );
+      }
+      await userReadModel.retrieveOTPCode(userDb.id, key, redis);
+
+      const accessToken = await jwtService.sign(userDb.id, redis);
+      return accessToken;
+    } catch (error) {
+      return handleError(error, 'Login user');
+    }
+  }
+  /**
+   *
+   * Purpose: Login User
+   *
+   * Context: Using User email and password we will Login User
+   *
+   * Returns: Access toke String
+   *
+   */
+
+  async login(
+    user: Login,
+    redis: Redis | null
+  ): Promise<string | LoginTwoFactorObject> {
     try {
       const userDb = await userReadModel.findUserInDatabase({
         email: user.email,
       });
+      if (userDb.isEmailVerificationEnabled || userDb.isTotpEnabled) {
+        return {
+          email: userDb.isEmailVerificationEnabled,
+          totp: userDb.isTotpEnabled,
+        };
+      }
       const isValidPassword = await passwordService.verify(
         user.password,
         userDb.password
