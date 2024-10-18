@@ -25,7 +25,7 @@ model User {
   password                String
   firstName               String
   lastName                String?
-  verified                Boolean        @default(true)
+  verified                Boolean        @default(false)
   isEmailVerifiedRequired Boolean        @default(false)
   isTotpEnabled           Boolean        @default(false)
   totpSecret              String?

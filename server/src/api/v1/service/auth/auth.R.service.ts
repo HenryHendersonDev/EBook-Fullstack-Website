@@ -4,6 +4,8 @@ import userReadModel from '../../model/auth/auth.R.model';
 import passwordService from '@/utils/auth/bcrypt';
 import AppError from '@/models/AppErrorModel';
 import jwtService from '@/utils/auth/jwt';
+import userVerifyLinkGenerate from '@/utils/auth/emailVerifyEncrypt';
+import userUpdateModel from '../../model/auth/auth.U.model';
 
 interface Login {
   email: string;
@@ -17,6 +19,12 @@ interface PublicData {
 interface IUserReadService {
   login(user: Login, redis: Redis | null): Promise<string>;
   getPublicData(accessToken: string, redis: Redis | null): Promise<PublicData>;
+  validateAccountVerification(
+    data: string,
+    iv: string,
+    tag: string,
+    redis: Redis | null
+  ): Promise<void>;
 }
 
 /**
@@ -97,7 +105,56 @@ class UserReadService implements IUserReadService {
       );
       return PublicData;
     } catch (error) {
-      return handleError(error, 'Getting user Pulic data');
+      return handleError(error, 'Getting user Public data');
+    }
+  }
+  /**
+   *
+   * Purpose: Validate user account verification
+   *
+   * Context: using Url query we will check user verify true or false
+   *
+   * Returns: Void
+   *
+   */
+
+  async validateAccountVerification(
+    data: string,
+    iv: string,
+    tag: string,
+    redis: Redis | null
+  ): Promise<void> {
+    try {
+      const isValid = await userVerifyLinkGenerate.decryptUserEmailLink(
+        data,
+        iv,
+        tag
+      );
+      if (!isValid) {
+        throw new AppError(
+          'Invalid Link',
+          400,
+          true,
+          undefined,
+          false,
+          'INVALID_LINK'
+        );
+      }
+      const divideString = (inputString) => {
+        const parts = inputString.split('&');
+        const email = parts[0].trim();
+        const otp = parts[1].trim();
+        return { email, otp };
+      };
+      const decodeData = divideString(isValid);
+      const user = await userReadModel.findUserInDatabase({
+        email: decodeData.email,
+      });
+
+      await userReadModel.retrieveOTPCode(user.id, decodeData.otp, redis);
+      await userUpdateModel.makeUserVerified(user.id);
+    } catch (error) {
+      return handleError(error, 'verifying user');
     }
   }
 }

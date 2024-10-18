@@ -23,6 +23,8 @@ interface IUserUpdateModel {
   ): Promise<User>;
 
   updateTotpSecret(userId: string, totpSecret: string): Promise<User>;
+
+  makeUserVerified(userId: string): Promise<void>;
 }
 
 /**
@@ -240,6 +242,42 @@ class UserUpdateModel implements IUserUpdateModel {
         }
       }
       return handleError(error, 'Adding Or Updating TOTP secret.');
+    }
+  }
+  /**
+   *
+   * Purpose: make user Verified
+   *
+   * Context: Using user id make user verified
+   *
+   * Returns: Void
+   *
+   */
+
+  async makeUserVerified(userId: string): Promise<void> {
+    try {
+      await prisma.user.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          verified: true,
+        },
+      });
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new AppError(
+            'User Not Found',
+            404,
+            true,
+            undefined,
+            false,
+            'USER_NOT_FOUND'
+          );
+        }
+      }
+      return handleError(error, ' setting User new Password');
     }
   }
 }

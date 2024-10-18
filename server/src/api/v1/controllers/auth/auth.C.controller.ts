@@ -1,5 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
-import { registerSchema } from '@/api/v1/validators/index.Validation';
+import {
+  emailVerifySchema,
+  registerSchema,
+} from '@/api/v1/validators/index.Validation';
 import AppError from '@/models/AppErrorModel';
 import userCreateService from '../../service/auth/auth.C.service';
 
@@ -51,4 +54,40 @@ const createUserAccount = async (
   }
 };
 
-export { createUserAccount };
+const sendVerificationEmailController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { accessToken } = req.signedCookies;
+    const { error } = emailVerifySchema.validate(req.body);
+    if (error && !accessToken) {
+      throw new AppError(
+        error.details[0].message,
+        400,
+        true,
+        undefined,
+        false,
+        'SCHEMA_VALIDATE_ERROR'
+      );
+    }
+
+    await userCreateService.sendVerificationEmail(
+      {
+        accessToken,
+        email: req.body.email,
+      },
+      req.redis
+    );
+
+    res.status(201).json({
+      message: 'successfully sent user account verification Email',
+      code: 'SUCCESSFULLY_SEND_VERIFICATION_EMAIL',
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export { createUserAccount, sendVerificationEmailController };

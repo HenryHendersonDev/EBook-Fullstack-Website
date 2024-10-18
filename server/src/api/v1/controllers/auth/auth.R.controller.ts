@@ -74,4 +74,39 @@ const getUserInfo = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-export { loginUserAccount, getUserInfo };
+const validateAccountVerification = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { data, iv, tag } = req.query;
+    if (!data || !iv || !tag) {
+      throw new AppError(
+        'Invalid Link',
+        400,
+        true,
+        undefined,
+        false,
+        'INVALID_LINK'
+      );
+    }
+
+    await userReadService.validateAccountVerification(
+      data as string,
+      iv as string,
+      tag as string,
+      req.redis
+    );
+
+    if (process.env['FRONTEND_URL']) {
+      res.status(200).redirect(`${process.env['FRONTEND_URL']}?Verified=true`);
+    } else {
+      res.status(200).redirect('/?Verified=true');
+    }
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export { loginUserAccount, getUserInfo, validateAccountVerification };

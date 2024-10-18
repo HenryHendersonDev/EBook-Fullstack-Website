@@ -4,6 +4,12 @@ import handleError from '@/utils/errorHandle';
 import Redis from 'ioredis';
 import userCreateModel from '../../model/auth/auth.C.model';
 import jwtService from '@/utils/auth/jwt';
+import AppError from '@/models/AppErrorModel';
+import userReadModel from '../../model/auth/auth.R.model';
+import userVerifyLinkGenerate from '@/utils/auth/emailVerifyEncrypt';
+import sendEmail from '@/utils/email/sendEmail';
+import emailVerificationAccount from '@/views/emailVerification';
+import gen6DNumber from '@/utils/otpGen';
 
 interface Register {
   email: string;
@@ -14,6 +20,10 @@ interface Register {
 }
 interface IUserCreateService {
   userRegisterService(user: Register, redis: Redis | null): Promise<string>;
+  sendVerificationEmail(
+    params: { email?: string; accessToken?: string },
+    redis: Redis | null
+  ): Promise<void>;
 }
 
 /**
@@ -64,6 +74,62 @@ class UserCreateService implements IUserCreateService {
       return accessToken;
     } catch (error) {
       return handleError(error, 'creating user');
+    }
+  }
+  /**
+   *
+   * Purpose: send Email
+   *
+   * Context: Given user email or access token we will send Verification email to user email address
+   *
+   * Returns: Void
+   *
+   */
+
+  async sendVerificationEmail(
+    params: { email?: string; accessToken?: string },
+    redis: Redis | null
+  ): Promise<void> {
+    try {
+      let userEmail = params.email!;
+      if (!params.email && params.accessToken) {
+        const userSession = jwtService.verify(params.accessToken, false);
+        if (!userSession) {
+          throw new AppError(
+            'User Not Found',
+            401,
+            true,
+            undefined,
+            false,
+            'UNAUTHORIZED_INVALID_OR_EXPIRED_TOKEN'
+          );
+        }
+        const userID = await userReadModel.findUserBySessionIdInDatabase(
+          userSession.id,
+          redis
+        );
+        const { email } = await userReadModel.findUserInDatabase({
+          userID: userID.userId,
+        });
+        userEmail = email;
+      }
+      const user = await userReadModel.findUserInDatabase({
+        email: userEmail,
+      });
+
+      const otp = gen6DNumber();
+      await userCreateModel.createNewOtpCode(user.id, otp, redis);
+
+      const link = await userVerifyLinkGenerate.encryptUserEmailLink(
+        `${user.email}&${otp}`
+      );
+      await sendEmail(
+        user.email,
+        'Verify Your Email Address',
+        emailVerificationAccount(link, user.firstName)
+      );
+    } catch (error) {
+      return handleError(error, 'sending user Email');
     }
   }
 }

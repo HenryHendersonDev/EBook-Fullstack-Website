@@ -37,6 +37,10 @@ export const delUserSchema = Joi.object({
   otp: Joi.string().length(6).required(),
 });
 
+export const emailVerifySchema = Joi.object({
+  email: Joi.string().email().required(),
+});
+
 export const twoFaVerifySchema = Joi.object({
   email: Joi.string().email(),
   token: Joi.string().length(6).required(),

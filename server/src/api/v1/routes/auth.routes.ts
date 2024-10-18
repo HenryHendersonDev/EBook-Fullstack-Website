@@ -4,6 +4,7 @@ import { csrfProtectionMiddleware } from '@/utils/auth/csrfProtection';
 import {
   getUserInfo,
   loginUserAccount,
+  validateAccountVerification,
 } from '../controllers/auth/auth.R.controller';
 import {
   deleteUser,
@@ -14,7 +15,10 @@ import {
   changeUser_Names,
   passwordReset,
 } from '../controllers/auth/auth.U.controller';
-import { createUserAccount } from '../controllers/auth/auth.C.controller';
+import {
+  createUserAccount,
+  sendVerificationEmailController,
+} from '../controllers/auth/auth.C.controller';
 import {
   createTotp,
   removeTotpUsingEmail,
@@ -45,6 +49,19 @@ router.post(
   csrfProtectionMiddleware,
   removeTotpUsingEmail
 );
+
 router.post('/remove-Totp/Totp', csrfProtectionMiddleware, removeTotpUsingTotp);
+
+router.post(
+  '/email-Verification-req',
+  csrfProtectionMiddleware,
+  sendVerificationEmailController
+);
+
+router.get(
+  '/email-Verification-check',
+  csrfProtectionMiddleware,
+  validateAccountVerification
+);
 
 export default router;
