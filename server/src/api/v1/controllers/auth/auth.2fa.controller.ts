@@ -4,6 +4,7 @@ import {
   removeTotpUsingTotpSchema,
   removeTotpUsingEmailSchema,
   twoFaVerifySchema,
+  generateTotp,
 } from '../../validators/index.Validation';
 import userTwoFactorAuthService from '../../service/auth/auth.2fa.service';
 import userReadModel from '../../model/auth/auth.R.model';
@@ -12,6 +13,7 @@ import jwtService from '@/utils/auth/jwt';
 const createTotp = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { accessToken } = req.signedCookies;
+    const { error } = generateTotp.validate(req.body);
     if (!accessToken) {
       throw new AppError(
         'You are not logged in',
@@ -22,11 +24,23 @@ const createTotp = async (req: Request, res: Response, next: NextFunction) => {
         'NOT_LOGGED_IN'
       );
     }
+    if (error) {
+      throw new AppError(
+        error.details[0].message,
+        400,
+        true,
+        undefined,
+        false,
+        'SCHEMA_VALIDATE_ERROR'
+      );
+    }
 
     const token = await userTwoFactorAuthService.generateTotp(
       accessToken,
+      req.body.otp,
       req.redis
     );
+
     res.status(200).json({
       message: 'Successfully Created totp Key',
       code: 'SUCCESSFULLY_CREATED_TOTP',

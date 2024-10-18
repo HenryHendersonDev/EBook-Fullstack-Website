@@ -50,6 +50,10 @@ export const twoFaVerifySchema = Joi.object({
   token: Joi.string().length(6).required(),
 });
 
+export const generateTotp = Joi.object({
+  otp: Joi.string().length(6).required(),
+});
+
 export const removeTotpUsingTotpSchema = Joi.object({
   token: Joi.string().length(6).required(),
 });

@@ -19,7 +19,11 @@ interface CreateTotp {
 }
 
 interface IUserTwoFactorAuthService {
-  generateTotp(accessToken: string, redis: Redis | null): Promise<CreateTotp>;
+  generateTotp(
+    accessToken: string,
+    otp: string,
+    redis: Redis | null
+  ): Promise<CreateTotp>;
 
   verifyTotp(totp: string, email: string): Promise<boolean>;
 
@@ -63,6 +67,7 @@ class UserTwoFactorAuthService implements IUserTwoFactorAuthService {
 
   async generateTotp(
     accessToken: string,
+    otp: string,
     redis: Redis | null
   ): Promise<CreateTotp> {
     try {
@@ -81,7 +86,7 @@ class UserTwoFactorAuthService implements IUserTwoFactorAuthService {
         userSession.id,
         redis
       );
-
+      await userReadModel.retrieveOTPCode(userID.userId, otp, redis);
       const { secret, otpauth_url } = totpUtils.generateSecretKey();
       const base64Image = await totpUtils.generateQRCode(otpauth_url);
 
