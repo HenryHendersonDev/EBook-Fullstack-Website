@@ -1,5 +1,5 @@
 import passwordService from '@/utils/auth/bcrypt';
-import storageUtils from '@/utils/cloudinaryUtils';
+import storageUtils, { CloudinaryFolders } from '@/utils/cloudinaryUtils';
 import handleError from '@/utils/errorHandle';
 import Redis from 'ioredis';
 import userCreateModel from '../../model/auth/auth.C.model';
@@ -52,7 +52,10 @@ class UserCreateService implements IUserCreateService {
       user.password = hashPassword;
 
       if (user.filePath) {
-        const { url, public_id } = await storageUtils.upload(user.filePath);
+        const { url, public_id } = await storageUtils.upload(
+          user.filePath,
+          CloudinaryFolders.PROFILE_PICS
+        );
         const data = {
           email: user.email,
           password: hashPassword,

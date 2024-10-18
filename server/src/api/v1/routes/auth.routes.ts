@@ -58,10 +58,6 @@ router.post(
   sendVerificationEmailController
 );
 
-router.get(
-  '/email-Verification-check',
-  csrfProtectionMiddleware,
-  validateAccountVerification
-);
+router.get('/email-Verification-check', validateAccountVerification);
 
 export default router;

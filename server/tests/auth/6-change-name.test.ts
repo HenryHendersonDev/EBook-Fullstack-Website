@@ -5,6 +5,7 @@ import { generateRandomData } from '../utils/userData';
 import path from 'path';
 import prisma from '../../src/config/prismaClientConfig';
 import { createDynamicUser } from '../utils/createNewUser';
+import { cleanDB } from '../utils/cleanDBUtils';
 
 describe('POST /auth/change-name', () => {
   it('Should Return 401 with Error Code UNAUTHORIZED_INVALID_OR_EXPIRED_TOKEN ', async () => {
@@ -27,11 +28,11 @@ describe('POST /auth/change-name', () => {
       .expect(401);
     expect(res.body.code).toBe('UNAUTHORIZED_INVALID_OR_EXPIRED_TOKEN');
   });
-  it('Should Return 404 with Error Code USER_NOT_FOUND ', async () => {
+  it('Should Return 404 with Error Code SESSION_NOT_FOUND ', async () => {
     const csrf = await getCsrfTokenAndCookie();
     const user = await createDynamicUser(csrf.token, csrf.csrfCookie);
     await new Promise((resolve) => setTimeout(resolve, 2500));
-    await prisma?.user.deleteMany();
+    await cleanDB();
     await new Promise((resolve) => setTimeout(resolve, 2500));
     const data = generateRandomData();
     const body = {
@@ -45,7 +46,7 @@ describe('POST /auth/change-name', () => {
       .send(body)
       .expect('Content-Type', /json/)
       .expect(404);
-    expect(res.body.code).toBe('USER_NOT_FOUND');
+    expect(res.body.code).toBe('SESSION_NOT_FOUND');
   });
   it('Should Return 401 with Error Code NOT_LOGGED_IN ', async () => {
     const csrf = await getCsrfTokenAndCookie();

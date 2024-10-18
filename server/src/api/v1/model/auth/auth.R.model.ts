@@ -179,16 +179,6 @@ class UserReadModel implements IUserReadModel {
           id: sessionID,
         },
       });
-      if (Session) {
-        const stringSession = JSON.stringify(Session);
-        await redisService.set(
-          sessionID,
-          stringSession,
-          redis,
-          1800,
-          'session'
-        );
-      }
       if (!Session) {
         throw new AppError(
           'Session Not Found',
@@ -199,6 +189,9 @@ class UserReadModel implements IUserReadModel {
           'SESSION_NOT_FOUND'
         );
       }
+      const stringSession = JSON.stringify(Session);
+      await redisService.set(sessionID, stringSession, redis, 1800, 'session');
+
       return Session;
     } catch (error) {
       return handleError(error, 'Finding User By Session ID');
@@ -240,7 +233,6 @@ class UserReadModel implements IUserReadModel {
           'INVALID_OTP'
         );
       }
-
       const isExpired = isValidDate(otpPrisma.createdAt, 5);
       if (!isExpired) {
         throw new AppError(

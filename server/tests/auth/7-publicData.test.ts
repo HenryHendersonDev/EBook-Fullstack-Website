@@ -1,3 +1,4 @@
+import { cleanDB } from './../utils/cleanDBUtils';
 import { getCsrfTokenAndCookie } from './../utils/csrfToken';
 import request from 'supertest';
 import app from '../../src/app';
@@ -21,13 +22,13 @@ describe('POST /auth/me', () => {
     expect(res.body.code).toBe('UNAUTHORIZED_INVALID_OR_EXPIRED_TOKEN');
   });
 
-  it('Should Return 404 with Error Code USER_NOT_FOUND ', async () => {
+  it('Should Return 404 with Error Code SESSION_NOT_FOUND ', async () => {
     const csrf = await getCsrfTokenAndCookie();
 
     const user = await createDynamicUser(csrf.token, csrf.csrfCookie);
 
     await new Promise((resolve) => setTimeout(resolve, 2500));
-    await prisma?.user.deleteMany();
+    await cleanDB();
     await new Promise((resolve) => setTimeout(resolve, 2500));
 
     const res = await request(app)
@@ -35,7 +36,7 @@ describe('POST /auth/me', () => {
       .set('Cookie', user.accessTokenCookie)
       .expect('Content-Type', /json/)
       .expect(404);
-    expect(res.body.code).toBe('USER_NOT_FOUND');
+    expect(res.body.code).toBe('SESSION_NOT_FOUND');
   });
 
   it('Should return 200 and respond with JSON. using Cookie', async () => {

@@ -81,7 +81,7 @@ const sendVerificationEmailController = async (
       req.redis
     );
 
-    res.status(201).json({
+    res.status(200).json({
       message: 'successfully sent user account verification Email',
       code: 'SUCCESSFULLY_SEND_VERIFICATION_EMAIL',
     });

@@ -150,7 +150,6 @@ class UserReadService implements IUserReadService {
       const user = await userReadModel.findUserInDatabase({
         email: decodeData.email,
       });
-
       await userReadModel.retrieveOTPCode(user.id, decodeData.otp, redis);
       await userUpdateModel.makeUserVerified(user.id);
     } catch (error) {

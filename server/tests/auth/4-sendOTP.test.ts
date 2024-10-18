@@ -35,8 +35,9 @@ describe('POST /auth/otp-request', () => {
 
   it('Should return 200 and respond with JSON. Using email', async () => {
     const csrf = await getCsrfTokenAndCookie();
+    const user = await createDynamicUser(csrf.token, csrf.csrfCookie);
     const body = {
-      email: FixedData.email,
+      email: user.email,
     };
     const res = await request(app)
       .post('/auth/otp-request')

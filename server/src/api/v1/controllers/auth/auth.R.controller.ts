@@ -100,9 +100,9 @@ const validateAccountVerification = async (
     );
 
     if (process.env['FRONTEND_URL']) {
-      res.status(200).redirect(`${process.env['FRONTEND_URL']}?Verified=true`);
+      res.status(302).redirect(`${process.env['FRONTEND_URL']}?Verified=true`);
     } else {
-      res.status(200).redirect('/?Verified=true');
+      res.status(302).redirect('/?Verified=true');
     }
   } catch (error) {
     return next(error);

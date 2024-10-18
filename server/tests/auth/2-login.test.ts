@@ -1,17 +1,17 @@
+import { createDynamicUser } from './../utils/createNewUser';
 import request from 'supertest';
 import app from '../../src/app';
-import fs from 'fs';
-import path from 'path';
 import { FixedData, generateRandomData } from '../utils/userData';
 import { getCsrfTokenAndCookie } from '../utils/csrfToken';
 
 describe('POST /auth/login', () => {
   it('Should return 200, set the Access Token cookie, and respond with JSON.', async () => {
     const csrfData = await getCsrfTokenAndCookie();
+    const user = await createDynamicUser(csrfData.token, csrfData.csrfCookie);
 
     const body = {
-      email: FixedData.email,
-      password: FixedData.password,
+      email: user.email,
+      password: user.password,
     };
 
     const res = await request(app)
@@ -39,16 +39,6 @@ describe('POST /auth/login', () => {
         .find((cookie) => cookie.startsWith('accessToken='));
     }
 
-    const filePath = path.join(__dirname, '../data/accessToken.txt');
-
-    fs.writeFile(filePath, accessTokenCookie, (err) => {
-      if (err) {
-        console.error('Error writing to file:', err);
-        return;
-      }
-      console.log('String saved to file!');
-    });
-
     expect(accessTokenCookie).toBeDefined();
   });
 
@@ -73,9 +63,10 @@ describe('POST /auth/login', () => {
 
   it('Should Return 400 with Error Code INVALID_PASSWORD ', async () => {
     const csrfData = await getCsrfTokenAndCookie();
+    const user = await createDynamicUser(csrfData.token, csrfData.csrfCookie);
     const data = generateRandomData();
     const body = {
-      email: FixedData.email,
+      email: user.email,
       password: data.password,
     };
 

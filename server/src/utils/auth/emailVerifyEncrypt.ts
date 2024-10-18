@@ -11,6 +11,18 @@ interface IUserVerifyLinkGenerate {
   ): string | null;
 }
 
+function base64UrlEncode(data: Buffer): string {
+  return data
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+}
+
+function base64UrlDecode(data: string): Buffer {
+  return Buffer.from(data.replace(/-/g, '+').replace(/_/g, '/'), 'base64');
+}
+
 /**
  * Class for generating and handling user verification links.
  */
@@ -56,7 +68,6 @@ class UserVerifyLinkGenerate implements IUserVerifyLinkGenerate {
   encryptUserEmailLink(email: string): string {
     try {
       const iv = crypto.randomBytes(16);
-
       const cipher = crypto.createCipheriv(
         'aes-256-gcm',
         Buffer.from(this.email_verification_encryption_key, 'hex'),
@@ -65,10 +76,13 @@ class UserVerifyLinkGenerate implements IUserVerifyLinkGenerate {
 
       let encrypted = cipher.update(email, 'utf8', 'base64');
       encrypted += cipher.final('base64');
+      const authTag = cipher.getAuthTag();
 
-      const authTag = cipher.getAuthTag().toString('base64');
+      const encryptedEmail = base64UrlEncode(Buffer.from(encrypted, 'base64'));
+      const ivEncoded = base64UrlEncode(iv);
+      const authTagEncoded = base64UrlEncode(authTag);
 
-      return `${this.protocol}://${this.domain}${this.port ? `:${this.port}` : ''}/auth/email-Verification-check?data=${encrypted}&iv=${iv.toString('base64')}&tag=${authTag}`;
+      return `${this.protocol}://${this.domain}${this.port ? `:${this.port}` : ''}/auth/email-verification-check?data=${encryptedEmail}&iv=${ivEncoded}&tag=${authTagEncoded}`;
     } catch (error) {
       return handleError(error, 'Encrypting User Email Link');
     }
@@ -93,12 +107,16 @@ class UserVerifyLinkGenerate implements IUserVerifyLinkGenerate {
       const decipher = crypto.createDecipheriv(
         'aes-256-gcm',
         Buffer.from(this.email_verification_encryption_key, 'hex'),
-        Buffer.from(iv, 'base64')
+        base64UrlDecode(iv)
       );
 
-      decipher.setAuthTag(Buffer.from(authTag, 'base64'));
+      decipher.setAuthTag(base64UrlDecode(authTag));
 
-      let decrypted = decipher.update(encryptedData, 'base64', 'utf8');
+      let decrypted = decipher.update(
+        base64UrlDecode(encryptedData).toString('base64'),
+        'base64',
+        'utf8'
+      );
       decrypted += decipher.final('utf8');
 
       return decrypted;

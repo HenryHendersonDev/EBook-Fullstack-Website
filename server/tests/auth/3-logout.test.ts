@@ -1,8 +1,8 @@
 import request from 'supertest';
 import app from '../../src/app';
 import fs from 'fs';
-import path from 'path';
 import { getCsrfTokenAndCookie } from '../utils/csrfToken';
+import { createDynamicUser } from '../utils/createNewUser';
 
 describe('POST /auth/logout', () => {
   it('Should Return 401 with Error Code NOT_LOGGED_IN ', async () => {
@@ -33,14 +33,12 @@ describe('POST /auth/logout', () => {
 
   it('Should return 200, Remove the Access Token cookie, and respond with JSON.', async () => {
     const csrf = await getCsrfTokenAndCookie();
-    const filePath = path.join(__dirname, '../data/accessToken.txt');
-
-    const data = fs.readFileSync(filePath, 'utf8');
+    const user = await createDynamicUser(csrf.token, csrf.csrfCookie);
 
     const res = await request(app)
       .post('/auth/logout')
       .set('x-csrf-token', csrf.token)
-      .set('Cookie', [data, csrf.csrfCookie])
+      .set('Cookie', [user.accessTokenCookie, csrf.csrfCookie])
       .expect('Content-Type', /json/)
       .expect(200);
 
@@ -60,7 +58,6 @@ describe('POST /auth/logout', () => {
         .split('; ')
         .find((cookie) => cookie.startsWith('accessToken='));
     }
-    fs.unlinkSync(path.join(__dirname, '../data/accessToken.txt'));
     expect(accessTokenCookie).toBeDefined();
   });
 });

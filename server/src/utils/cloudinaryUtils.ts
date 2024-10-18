@@ -2,8 +2,13 @@ import cloudinary from '@/config/cloudinaryConfig';
 import handleError from '@/utils/errorHandle';
 import { UploadApiResponse } from 'cloudinary';
 
+export enum CloudinaryFolders {
+  PROFILE_PICS = 'profile_pics',
+  PRODUCT_IMAGES = 'product_images',
+}
+
 interface IStorageUtils {
-  upload(file: string): Promise<UploadApiResponse>;
+  upload(file: string, folder: CloudinaryFolders): Promise<UploadApiResponse>;
   delete(publicId: string, type: string): Promise<UploadApiResponse>;
 }
 
@@ -24,9 +29,13 @@ class StorageUtils implements IStorageUtils {
    *
    */
 
-  async upload(file: string): Promise<UploadApiResponse> {
+  async upload(
+    file: string,
+    folder: CloudinaryFolders
+  ): Promise<UploadApiResponse> {
     try {
       const res = await cloudinary.uploader.upload(file, {
+        folder,
         resource_type: 'auto',
       });
       return res;
@@ -59,7 +68,6 @@ class StorageUtils implements IStorageUtils {
 /**
  *
  * Purpose: Uploading and deleting Files
- *
  *
  */
 

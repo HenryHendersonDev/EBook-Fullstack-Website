@@ -10,9 +10,8 @@ describe('POST /auth/register', () => {
   it('Should return 201, set the Access Token cookie, and respond with JSON.', async () => {
     await cleanDB();
     const csrfData = await getCsrfTokenAndCookie();
-    const user = await createFixedUser(csrfData.token, csrfData.csrfCookie);
+    await createFixedUser(csrfData.token, csrfData.csrfCookie);
   });
-
   it('Should Return 409 with Error Code UNIQUE_CONSTRAINT_FAILED ', async () => {
     const csrfData = await getCsrfTokenAndCookie();
     const imgDIR = path.join(__dirname, '../data/avatar.jpg');

@@ -7,8 +7,33 @@ import prisma from '../../src/config/prismaClientConfig';
 import { getCsrfTokenAndCookie } from '../utils/csrfToken';
 import { subMinutes } from 'date-fns';
 import { exec } from 'child_process';
+import { cleanDB } from '../utils/cleanDBUtils';
 
 describe('POST /auth/password-reset', () => {
+  it('Should Return 404 with Error Code SESSION_NOT_FOUND ', async () => {
+    const csrf = await getCsrfTokenAndCookie();
+
+    const user = await createDynamicUser(csrf.token, csrf.csrfCookie);
+
+    await new Promise((resolve) => setTimeout(resolve, 2500));
+    await cleanDB();
+    await new Promise((resolve) => setTimeout(resolve, 2500));
+    const data = generateRandomData();
+
+    const body = {
+      otp: data.otp,
+      newPassword: data.password,
+    };
+
+    const res = await request(app)
+      .post('/auth/password-reset')
+      .set('x-csrf-token', csrf.token)
+      .set('Cookie', [user.accessTokenCookie, csrf.csrfCookie])
+      .send(body)
+      .expect('Content-Type', /json/)
+      .expect(404);
+    expect(res.body.code).toBe('SESSION_NOT_FOUND');
+  });
   it('Should Return 404 with Error Code USER_NOT_FOUND ', async () => {
     const csrf = await getCsrfTokenAndCookie();
 
@@ -29,31 +54,6 @@ describe('POST /auth/password-reset', () => {
 
     expect(res.body.code).toBe('USER_NOT_FOUND');
   });
-
-  it('Should Return 404 with Error Code USER_NOT_FOUND ', async () => {
-    const csrf = await getCsrfTokenAndCookie();
-
-    const user = await createDynamicUser(csrf.token, csrf.csrfCookie);
-
-    await new Promise((resolve) => setTimeout(resolve, 2500));
-    await prisma?.user.deleteMany();
-    await new Promise((resolve) => setTimeout(resolve, 2500));
-    const data = generateRandomData();
-    const body = {
-      otp: data.otp,
-      newPassword: data.password,
-    };
-
-    const res = await request(app)
-      .post('/auth/password-reset')
-      .set('x-csrf-token', csrf.token)
-      .set('Cookie', [user.accessTokenCookie, csrf.csrfCookie])
-      .send(body)
-      .expect('Content-Type', /json/)
-      .expect(404);
-    expect(res.body.code).toBe('USER_NOT_FOUND');
-  });
-
   it('Should Return 401 with Error Code UNAUTHORIZED_INVALID_OR_EXPIRED_TOKEN ', async () => {
     const csrf = await getCsrfTokenAndCookie();
 
