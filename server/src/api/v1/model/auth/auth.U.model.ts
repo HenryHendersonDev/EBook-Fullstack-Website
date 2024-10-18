@@ -25,6 +25,10 @@ interface IUserUpdateModel {
   updateTotpSecret(userId: string, totpSecret: string): Promise<User>;
 
   makeUserVerified(userId: string): Promise<void>;
+
+  makeUserEmailVerify(userId: string): Promise<void>;
+
+  removeUserEmailVerify(userId: string): Promise<void>;
 }
 
 /**
@@ -262,6 +266,78 @@ class UserUpdateModel implements IUserUpdateModel {
         },
         data: {
           verified: true,
+        },
+      });
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new AppError(
+            'User Not Found',
+            404,
+            true,
+            undefined,
+            false,
+            'USER_NOT_FOUND'
+          );
+        }
+      }
+      return handleError(error, ' setting User new Password');
+    }
+  }
+  /**
+   *
+   * Purpose: make user Email verification
+   *
+   * Context: using user id enable user required email verification for two factor
+   *
+   * Returns: Void
+   *
+   */
+
+  async makeUserEmailVerify(userId: string): Promise<void> {
+    try {
+      await prisma.user.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          isEmailVerificationEnabled: true,
+        },
+      });
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new AppError(
+            'User Not Found',
+            404,
+            true,
+            undefined,
+            false,
+            'USER_NOT_FOUND'
+          );
+        }
+      }
+      return handleError(error, ' setting User new Password');
+    }
+  }
+  /**
+   *
+   * Purpose: Remove user Email verification
+   *
+   * Context: using user id enable user remove email verification for two factor
+   *
+   * Returns: Void
+   *
+   */
+
+  async removeUserEmailVerify(userId: string): Promise<void> {
+    try {
+      await prisma.user.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          isEmailVerificationEnabled: false,
         },
       });
     } catch (error) {

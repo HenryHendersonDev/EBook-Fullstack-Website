@@ -33,6 +33,10 @@ export const NameChange = Joi.object({
   lastName: Joi.string().min(1),
 }).or('firstName', 'lastName');
 
+export const enableAndRemoveEmailVerify = Joi.object({
+  otp: Joi.string().length(6).required(),
+});
+
 export const delUserSchema = Joi.object({
   otp: Joi.string().length(6).required(),
 });

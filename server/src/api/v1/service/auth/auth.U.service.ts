@@ -26,6 +26,18 @@ interface IUserUpdateService {
     firstName?: string,
     lastName?: string
   ): Promise<boolean>;
+
+  enableEmailVerifyService(
+    accessToken: string,
+    otp: string,
+    redis: Redis | null
+  ): Promise<void>;
+
+  disableEmailVerifyService(
+    accessToken: string,
+    otp: string,
+    redis: Redis | null
+  ): Promise<void>;
 }
 
 /**
@@ -166,6 +178,90 @@ class UserUpdateService implements IUserUpdateService {
       return false;
     } catch (error) {
       return handleError(error, 'updating user first or last or both name');
+    }
+  }
+  /**
+   *
+   * Purpose: Enabling Email Verification
+   *
+   * Context: Enable Email Verification for users account two factor auth
+   *
+   * Returns: Void Otherwise thrown error
+   *
+   */
+
+  async enableEmailVerifyService(
+    accessToken: string,
+    otp: string,
+    redis: Redis | null
+  ): Promise<void> {
+    try {
+      const userSession = jwtService.verify(accessToken, false);
+      if (!userSession) {
+        throw new AppError(
+          'User Not Found',
+          401,
+          true,
+          undefined,
+          false,
+          'UNAUTHORIZED_INVALID_OR_EXPIRED_TOKEN'
+        );
+      }
+      const { userId } = await userReadModel.findUserBySessionIdInDatabase(
+        userSession.id,
+        redis
+      );
+
+      const user = await userReadModel.findUserInDatabase({
+        userID: userId,
+      });
+
+      await userReadModel.retrieveOTPCode(user.id, otp, redis);
+      await userUpdateModel.makeUserEmailVerify(user.id);
+    } catch (error) {
+      return handleError(error, 'Enabling Email Verification 2fa');
+    }
+  }
+  /**
+   *
+   * Purpose: disabling Email Verification
+   *
+   * Context: disabling Email Verification for users account two factor auth
+   *
+   * Returns: Void Otherwise thrown error
+   *
+   */
+
+  async disableEmailVerifyService(
+    accessToken: string,
+    otp: string,
+    redis: Redis | null
+  ): Promise<void> {
+    try {
+      const userSession = jwtService.verify(accessToken, false);
+      if (!userSession) {
+        throw new AppError(
+          'User Not Found',
+          401,
+          true,
+          undefined,
+          false,
+          'UNAUTHORIZED_INVALID_OR_EXPIRED_TOKEN'
+        );
+      }
+      const { userId } = await userReadModel.findUserBySessionIdInDatabase(
+        userSession.id,
+        redis
+      );
+
+      const user = await userReadModel.findUserInDatabase({
+        userID: userId,
+      });
+
+      await userReadModel.retrieveOTPCode(user.id, otp, redis);
+      await userUpdateModel.removeUserEmailVerify(user.id);
+    } catch (error) {
+      return handleError(error, 'disabling Email Verification 2fa');
     }
   }
 }

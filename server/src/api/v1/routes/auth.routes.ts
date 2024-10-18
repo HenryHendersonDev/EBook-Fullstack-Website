@@ -13,7 +13,9 @@ import {
 import { reqOtoCODE } from '../controllers/auth/auth.otp.controller';
 import {
   changeUser_Names,
+  enableEmail2FA,
   passwordReset,
+  removeEmail2FA,
 } from '../controllers/auth/auth.U.controller';
 import {
   createUserAccount,
@@ -59,5 +61,17 @@ router.post(
 );
 
 router.get('/email-Verification-check', validateAccountVerification);
+
+router.post(
+  '/email-Verification-enable-2fa',
+  csrfProtectionMiddleware,
+  enableEmail2FA
+);
+
+router.post(
+  '/email-Verification-remove-2fa',
+  csrfProtectionMiddleware,
+  removeEmail2FA
+);
 
 export default router;

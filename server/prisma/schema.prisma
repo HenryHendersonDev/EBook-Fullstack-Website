@@ -20,26 +20,26 @@ model ErrorLog {
 }
 
 model User {
-  id                      String         @id @default(uuid())
-  email                   String         @unique
-  password                String
-  firstName               String
-  lastName                String?
-  verified                Boolean        @default(false)
-  isEmailVerifiedRequired Boolean        @default(false)
-  isTotpEnabled           Boolean        @default(false)
-  totpSecret              String?
-  role                    UserRole       @default(USER)
-  createdAt               DateTime       @default(now())
-  updatedAt               DateTime       @updatedAt
-  session                 Sessions[]
-  otp                     OTP[]
-  orders                  Order[]
-  reviews                 Review[]
-  wishlist                Wishlist?
-  wishlistItems           WishlistItem[]
-  profileImage            String?
-  imagePublicID           String?
+  id                         String         @id @default(uuid())
+  email                      String         @unique
+  password                   String
+  firstName                  String
+  lastName                   String?
+  verified                   Boolean        @default(false)
+  isEmailVerificationEnabled Boolean        @default(false)
+  isTotpEnabled              Boolean        @default(false)
+  totpSecret                 String?
+  role                       UserRole       @default(USER)
+  createdAt                  DateTime       @default(now())
+  updatedAt                  DateTime       @updatedAt
+  session                    Sessions[]
+  otp                        OTP[]
+  orders                     Order[]
+  reviews                    Review[]
+  wishlist                   Wishlist?
+  wishlistItems              WishlistItem[]
+  profileImage               String?
+  imagePublicID              String?
 }
 
 model OTP {
